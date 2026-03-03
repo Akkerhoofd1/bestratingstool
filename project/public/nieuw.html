@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Offertetool Dennis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {font-family: system-ui, sans-serif; margin: 0; padding: 0; background:#f5f5f5;}
+    header {background:#111827; color:#fff; padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;}
+    header h1 {font-size:1.2rem; margin:0;}
+    main {padding:1rem; max-width:1100px; margin:0 auto;}
+    .toolbar {display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1rem; align-items:center;}
+    select, input[type="text"], input[type="number"] {
+      padding:.4rem .5rem; border-radius:.4rem; border:1px solid #d1d5db; font-size:.9rem;
+    }
+    table {width:100%; border-collapse:collapse; background:#fff; border-radius:.75rem; overflow:hidden;}
+    th, td {padding:.35rem .5rem; font-size:.8rem; border-bottom:1px solid #e5e7eb;}
+    th {background:#e5e7eb; text-align:left;}
+    tr:nth-child(even) td {background:#f9fafb;}
+    tr.item-row:hover td {background:#e0f2fe;}
+    .right {text-align:right;}
+    .badge {display:inline-flex; align-items:center; padding:.1rem .45rem; border-radius:999px; font-size:.7rem; background:#e5e7eb; color:#374151;}
+    .totals {margin-top:1rem; max-width:390px; margin-left:auto;}
+    .totals-row {display:flex; justify-content:space-between; padding:.25rem 0; font-size:.9rem;}
+    .totals-row.total {font-weight:700; border-top:1px solid #d1d5db; margin-top:.25rem; padding-top:.4rem;}
+    .chip {display:inline-flex; align-items:center; gap:.3rem; padding:.2rem .5rem; border-radius:999px; font-size:.75rem; border:1px solid #d1d5db; background:#fff;}
+    button {
+      border:none; border-radius:.5rem; padding:.4rem .8rem; font-size:.8rem; cursor:pointer;
+      background:#111827; color:#fff; display:inline-flex; align-items:center; gap:.25rem;
+    }
+    button.secondary {background:#e5e7eb; color:#111827;}
+    button:active {transform:translateY(1px);}
+    .pill-toggle {display:inline-flex; border-radius:999px; border:1px solid #d1d5db; overflow:hidden;}
+    .pill-toggle button {
+      border-radius:0; background:transparent; color:#4b5563; padding:.25rem .75rem;
+    }
+    .pill-toggle button.active {background:#111827; color:#fff;}
+
+    .offerte-box {
+      margin-top:1.5rem;
+      background:#fff;
+      border-radius:.75rem;
+      padding:.75rem;
+      border:1px solid #e5e7eb;
+    }
+    .offerte-box h2 {
+      font-size:.95rem;
+      margin-top:0;
+      margin-bottom:.5rem;
+    }
+
+    .offerte-header-inputs {
+      display:flex;
+      flex-wrap:wrap;
+      gap:.5rem;
+      margin-bottom:.5rem;
+      font-size:.8rem;
+    }
+    .offerte-header-inputs input {
+      flex:1 1 180px;
+      min-width:0;
+    }
+
+    textarea {
+      display:block;
+      width:100%;
+      min-height:180px;
+      border-radius:.5rem;
+      border:1px solid #d1d5db;
+      padding:.5rem;
+      font-family:system-ui, sans-serif;
+      font-size:.8rem;
+      resize:vertical;
+      background:#f9fafb;
+      margin-top:.5rem;
+    }
+
+    @media (max-width:700px) {
+      th:nth-child(3), td:nth-child(3) {display:none;}
+      .totals {max-width:100%; margin-left:0;}
+    }
+
+    /* PRINT / PDF LAYOUT */
+    @media print {
+      body { background:#fff; }
+
+      .toolbar,
+      .pill-toggle,
+      button,
+      .offerte-header-inputs {
+        display:none !important;
+      }
+
+      main {
+        max-width:100%;
+        padding:0.5rem;
+      }
+
+      table {
+        font-size:0.75rem;
+      }
+
+      .offerte-box textarea {
+        min-height:300px;
+        border:none;
+        background:#fff;
+      }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div style="display:flex; align-items:center; gap:.75rem;">
+    <h1>Offertetool Dennis</h1>
+  </div>
+  <div style="display:flex; gap:.5rem; align-items:center; font-size:.8rem;">
+  </div>
+</header>
+<main>
+  <div class="toolbar">
+    <div class="pill-toggle">
+      <button type="button" class="active" id="allBtn">Alle</button>
+      <button type="button" id="straatwerkBtn">Straatwerk</button>
+      <button type="button" id="grondwerkBtn">Grondwerk</button>
+      <button type="button" id="pvcBtn">PVC</button>
+      <button type="button" id="containersBtn">Containers</button>
+      <button type="button" id="verhuurBtn">Verhuur</button>
+      <button type="button" id="overigBtn">Overig</button>
+    </div>
+    <input type="text" id="searchInput" placeholder="Zoeken op werkzaamheid..." style="flex:1 1 140px; min-width:0;" />
+    <label class="chip">
+      <input type="checkbox" id="voorrijToggle" style="margin-right:.25rem;" />
+      Voorrijkosten €65
+    </label>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Categorie</th>
+        <th>Werkzaamheid</th>
+        <th>Eenheid</th>
+        <th class="right">Prijs (excl.)</th>
+        <th class="right">Aantal</th>
+        <th class="right">Totaal</th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody"></tbody>
+  </table>
+
+  <div class="totals">
+    <div class="totals-row">
+      <span>Subtotaal (excl. btw)</span>
+      <span id="subExcl">€0,00</span>
+    </div>
+    <div class="totals-row">
+      <span>BTW 21%</span>
+      <span id="btw">€0,00</span>
+    </div>
+    <div class="totals-row total">
+      <span>Totaal incl. btw</span>
+      <span id="totalIncl">€0,00</span>
+    </div>
+  </div>
+
+  <div class="offerte-box">
+    <h2>Offertetekst</h2>
+    <div class="offerte-header-inputs">
+      <input type="text" id="klantNaam" placeholder="Naam klant (optioneel)" />
+      <input type="text" id="projectNaam" placeholder="Project / omschrijving (optioneel)" />
+      <input type="text" id="plaatsDatum" placeholder="Plaats + datum (optioneel)" />
+    </div>
+    <button type="button" id="genTextBtn">Genereer offertetekst</button>
+    <button type="button" class="secondary" id="selectTextBtn">Selecteer tekst</button>
+    <textarea id="offerteText" placeholder="Hier verschijnt de offertetekst. Je kunt deze kopiëren en plakken in Word, e-mail of je offerteprogramma."></textarea>
+  </div>
+</main>
+
+<script>
+const itemsFromCsv = [
+  { "category": "STRAATWERK", "name": "Bestrating uitbreken", "unit": "m²", "priceCsv": 15.0 },
+  { "category": "STRAATWERK", "name": "Herbestarten tegels", "unit": "m²", "priceCsv": 25.0 },
+  { "category": "STRAATWERK", "name": "Herbestarten stenen", "unit": "m²", "priceCsv": 30.0 },
+  { "category": "STRAATWERK", "name": "Bestrating aanleggen tegels nieuw", "unit": "m²", "priceCsv": 35.0 },
+  { "category": "STRAATWERK", "name": "bestrating aanleggen stenen nieuw", "unit": "m²", "priceCsv": 25.0 },
+  { "category": "STRAATWERK", "name": "bloembak aanbrengen", "unit": "m1", "priceCsv": 25.0 },
+  { "category": "STRAATWERK", "name": "Tegels zagen", "unit": "m1", "priceCsv": 15.0 },
+  { "category": "STRAATWERK", "name": "Pasmaken dmv knippen", "unit": "m1", "priceCsv": 8.0 },
+  { "category": "STRAATWERK", "name": "Opsluitbanden uitbreken", "unit": "m1", "priceCsv": 6.0 },
+  { "category": "STRAATWERK", "name": "Opsluitbanden plaatsen 6x20", "unit": "m1", "priceCsv": 5.0 },
+  { "category": "STRAATWERK", "name": "Opsluitbanden plaatsen 10/20", "unit": "m1", "priceCsv": 12.0 },
+  { "category": "STRAATWERK", "name": "Opsluitbanden plaatsen 13/15 en groter", "unit": "m1", "priceCsv": 12.0 },
+  { "category": "STRAATWERK", "name": "Voegen van tuin (excl. materiaal)", "unit": "m²", "priceCsv": 12.0 },
+  { "category": "STRAATWERK", "name": "Verwijderen van voegsel aan oude tegels", "unit": "m²", "priceCsv": 8.0 },
+  { "category": "STRAATWERK", "name": "Puin afvoeren", "unit": "klus", "priceCsv": 75.0 },
+
+  { "category": "GRONDWERK", "name": "Zand aanbrengen+leveren", "unit": "m³", "priceCsv": 60.0 },
+  { "category": "GRONDWERK", "name": "Grond afgraven", "unit": "m³", "priceCsv": 25.0 },
+  { "category": "GRONDWERK", "name": "Tuinaarde aanbrengen", "unit": "m³", "priceCsv": 55.0 },
+  { "category": "GRONDWERK", "name": "Grond afgraven (zonder schone verklaring)", "unit": "m³", "priceCsv": 95.0 },
+  { "category": "GRONDWERK", "name": "Grond aanbrengen incl. leveren - Teelaarde", "unit": "m³", "priceCsv": 65.0 },
+  { "category": "GRONDWERK", "name": "Grond aanbrengen incl. leveren - Tuinaarde", "unit": "m³", "priceCsv": 55.0 },
+  { "category": "GRONDWERK", "name": "Grond aanbrengen incl. leveren - Schrale grond", "unit": "m³", "priceCsv": 45.0 },
+  { "category": "GRONDWERK", "name": "Grond aanbrengen incl. leveren - Vulgrond / ophooggrond", "unit": "m³", "priceCsv": 40.0 },
+  { "category": "GRONDWERK", "name": "Grond aanbrengen incl. leveren - Compostgrond", "unit": "m³", "priceCsv": 70.0 },
+  { "category": "GRONDWERK", "name": "Gras leggen", "unit": "m²", "priceCsv": 10.0 },
+  { "category": "GRONDWERK", "name": "Drainage aanleggen", "unit": "meter", "priceCsv": 15.0 },
+  { "category": "GRONDWERK", "name": "Tuinpad aanleggen", "unit": "m²", "priceCsv": 30.0 },
+  { "category": "GRONDWERK", "name": "Beplanting aanbrengen", "unit": "stuk", "priceCsv": 6.0 },
+  { "category": "GRONDWERK", "name": "Boom plaatsen", "unit": "stuk", "priceCsv": 40.0 },
+  { "category": "GRONDWERK", "name": "BigBag zand incl. levering", "unit": "stuk", "priceCsv": 85.0 },
+  { "category": "GRONDWERK", "name": "BigBag teelaarde incl. levering", "unit": "stuk", "priceCsv": 115.0 },
+  { "category": "GRONDWERK", "name": "BigBag schrale grond incl. levering", "unit": "stuk", "priceCsv": 95.0 },
+  { "category": "GRONDWERK", "name": "BigBag vulgrond incl. levering", "unit": "stuk", "priceCsv": 75.0 },
+
+  { "category": "SCHUTTINGEN", "name": "Schutting plaatsen", "unit": "meter", "priceCsv": 60.0 },
+  { "category": "SCHUTTINGEN", "name": "Schutting plaatsen – betonschutting", "unit": "m¹", "priceCsv": 58.0 },
+  { "category": "SCHUTTINGEN", "name": "Poort afhangen – betonschutting", "unit": "stuk", "priceCsv": 175.0 },
+  { "category": "SCHUTTINGEN", "name": "Schutting plaatsen – hardhout", "unit": "m¹", "priceCsv": 48.0 },
+  { "category": "SCHUTTINGEN", "name": "Poort afhangen – hardhouten schutting", "unit": "stuk", "priceCsv": 150.0 },
+
+  { "category": "ARBEID", "name": "Stratenmaker (per uur)", "unit": "uur", "priceCsv": 60.0 },
+  { "category": "ARBEID", "name": "Opperman (per uur)", "unit": "uur", "priceCsv": 45.0 },
+
+  { "category": "GEMEENTEWERK", "name": "Trottoirbanden plaatsen", "unit": "meter", "priceCsv": 18.0 },
+  { "category": "GEMEENTEWERK", "name": "Riolering leggen PVC Ø125-160mm", "unit": "meter", "priceCsv": 65.0 },
+  { "category": "GEMEENTEWERK", "name": "Riolering leggen PVC Ø200-250mm", "unit": "meter", "priceCsv": 85.0 },
+  { "category": "GEMEENTEWERK", "name": "Kolken leveren en plaatsen", "unit": "stuk", "priceCsv": 350.0 },
+  { "category": "GEMEENTEWERK", "name": "Fundering (menggranulaat) aanbrengen", "unit": "m³", "priceCsv": 40.0 },
+  { "category": "GEMEENTEWERK", "name": "Putkoppen leveren en plaatsen", "unit": "stuk", "priceCsv": 200.0 },
+  { "category": "GEMEENTEWERK", "name": "Straatkolkdeksels leveren en plaatsen", "unit": "stuk", "priceCsv": 175.0 },
+  { "category": "GEMEENTEWERK", "name": "Aansluiten kolk op hoofdriool", "unit": "stuk", "priceCsv": 150.0 },
+
+  /* PVC MATERIAAL */
+  { "category": "PVC", "name": "PVC buis Ø50 mm", "unit": "m¹", "priceCsv": 1.75 },
+  { "category": "PVC", "name": "PVC buis Ø75 mm", "unit": "m¹", "priceCsv": 2.40 },
+  { "category": "PVC", "name": "PVC buis Ø110 mm", "unit": "m¹", "priceCsv": 3.60 },
+  { "category": "PVC", "name": "PVC buis Ø125 mm", "unit": "m¹", "priceCsv": 4.80 },
+  { "category": "PVC", "name": "PVC buis Ø160 mm", "unit": "m¹", "priceCsv": 6.80 },
+
+  { "category": "PVC", "name": "PVC schuifmof Ø110 mm (2x manchet)", "unit": "stuk", "priceCsv": 2.50 },
+  { "category": "PVC", "name": "PVC overschuifmof Ø110 mm", "unit": "stuk", "priceCsv": 4.95 },
+  { "category": "PVC", "name": "PVC steekmof Ø110 mm (lijm)", "unit": "stuk", "priceCsv": 2.25 },
+
+  { "category": "PVC", "name": "PVC bocht 45° mof/spie Ø110 mm", "unit": "stuk", "priceCsv": 4.75 },
+  { "category": "PVC", "name": "PVC bocht 90° mof/spie Ø110 mm", "unit": "stuk", "priceCsv": 5.50 },
+
+  { "category": "PVC", "name": "PVC T-stuk 45° Ø110 mm", "unit": "stuk", "priceCsv": 7.00 },
+  { "category": "PVC", "name": "PVC ontstoppingsstuk Ø110 mm", "unit": "stuk", "priceCsv": 10.00 },
+  { "category": "PVC", "name": "PVC eindkap Ø110 mm", "unit": "stuk", "priceCsv": 1.75 },
+  { "category": "PVC", "name": "PVC verloop T-stuk 110/50 mm 45°", "unit": "stuk", "priceCsv": 4.50 },
+
+  { "category": "VERHUUR", "name": "Mini kraan Kubota 1000 kg – dag", "unit": "dag", "priceCsv": 120.0 },
+  { "category": "VERHUUR", "name": "Mini kraan Kubota 1000 kg – week", "unit": "week", "priceCsv": 415.0 },
+  { "category": "VERHUUR", "name": "Messersi rupsdumper – dag", "unit": "dag", "priceCsv": 95.0 },
+  { "category": "VERHUUR", "name": "Messersi rupsdumper – week", "unit": "week", "priceCsv": 350.0 },
+  { "category": "VERHUUR", "name": "Giant G1500L X-TRA shovel – dag", "unit": "dag", "priceCsv": 140.0 },
+  { "category": "VERHUUR", "name": "Giant G1500L X-TRA shovel – week", "unit": "week", "priceCsv": 490.0 },
+  { "category": "VERHUUR", "name": "Afschotlaser – dag", "unit": "dag", "priceCsv": 30.0 },
+  { "category": "VERHUUR", "name": "Afschotlaser – week", "unit": "week", "priceCsv": 90.0 },
+  { "category": "VERHUUR", "name": "Carat zaagtafel 120 cm – dag", "unit": "dag", "priceCsv": 60.0 },
+  { "category": "VERHUUR", "name": "Carat zaagtafel 120 cm – week", "unit": "week", "priceCsv": 180.0 },
+  { "category": "VERHUUR", "name": "Lumag trilplaat 1 ton – dag", "unit": "dag", "priceCsv": 30.0 },
+  { "category": "VERHUUR", "name": "Lumag trilplaat 1 ton – week", "unit": "week", "priceCsv": 100.0 },
+  { "category": "VERHUUR", "name": "Trilplaat 3,5 ton – dag", "unit": "dag", "priceCsv": 40.0 },
+  { "category": "VERHUUR", "name": "Trilplaat 3,5 ton – week", "unit": "week", "priceCsv": 130.0 },
+  { "category": "VERHUUR", "name": "Trilplaat 6 ton – dag", "unit": "dag", "priceCsv": 50.0 },
+  { "category": "VERHUUR", "name": "Trilplaat 6 ton – week", "unit": "week", "priceCsv": 170.0 },
+  { "category": "VERHUUR", "name": "Wacker stamper – dag", "unit": "dag", "priceCsv": 35.0 },
+  { "category": "VERHUUR", "name": "Wacker stamper – week", "unit": "week", "priceCsv": 110.0 },
+  { "category": "VERHUUR", "name": "Doorslijper Husqvarna K770 (300 blad) – dag", "unit": "dag", "priceCsv": 45.0 },
+  { "category": "VERHUUR", "name": "Doorslijper Husqvarna K770 (300 blad) – week", "unit": "week", "priceCsv": 140.0 },
+  { "category": "VERHUUR", "name": "Hydraulische knipper – dag", "unit": "dag", "priceCsv": 50.0 },
+  { "category": "VERHUUR", "name": "Hydraulische knipper – week", "unit": "week", "priceCsv": 160.0 },
+  { "category": "VERHUUR", "name": "Strakvlakmachine – dag", "unit": "dag", "priceCsv": 55.0 },
+  { "category": "VERHUUR", "name": "Strakvlakmachine – week", "unit": "week", "priceCsv": 180.0 },
+
+  { "category": "GRONDCONTAINERS (SCHONE GROND)", "name": "Grond 3 m³", "unit": "stuks", "priceCsv": 285.0 },
+  { "category": "GRONDCONTAINERS (SCHONE GROND)", "name": "Grond 6 m³", "unit": "stuks", "priceCsv": 389.0 },
+  { "category": "GRONDCONTAINERS (SCHONE GROND)", "name": "Grond 10 m³", "unit": "stuks", "priceCsv": 525.0 },
+  { "category": "GRONDCONTAINERS (SCHONE GROND)", "name": "Grond 15 m³", "unit": "stuks", "priceCsv": 825.0 },
+
+  { "category": "GROENCONTAINERS (TUINAFVAL)", "name": "Groen 3 m³", "unit": "stuks", "priceCsv": 139.0 },
+  { "category": "GROENCONTAINERS (TUINAFVAL)", "name": "Groen 6 m³", "unit": "stuks", "priceCsv": 172.0 },
+  { "category": "GROENCONTAINERS (TUINAFVAL)", "name": "Groen 10 m³", "unit": "stuks", "priceCsv": 220.0 },
+  { "category": "GROENCONTAINERS (TUINAFVAL)", "name": "Groen 20 m³", "unit": "stuks", "priceCsv": 468.0 },
+  { "category": "GROENCONTAINERS (TUINAFVAL)", "name": "Groen 40 m³", "unit": "stuks", "priceCsv": 690.0 },
+
+  { "category": "BOUW- & SLOOPCONTAINERS", "name": "Bouw & sloop 3 m³", "unit": "stuks", "priceCsv": 230.0 },
+  { "category": "BOUW- & SLOOPCONTAINERS", "name": "Bouw & sloop 6 m³", "unit": "stuks", "priceCsv": 313.0 },
+  { "category": "BOUW- & SLOOPCONTAINERS", "name": "Bouw & sloop 10 m³", "unit": "stuks", "priceCsv": 395.0 },
+  { "category": "BOUW- & SLOOPCONTAINERS", "name": "Bouw & sloop 20 m³", "unit": "stuks", "priceCsv": 980.0 },
+  { "category": "BOUW- & SLOOPCONTAINERS", "name": "Bouw & sloop 40 m³", "unit": "stuks", "priceCsv": 1440.0 },
+
+  { "category": "PUINCONTAINERS", "name": "Puin 3 m³", "unit": "stuks", "priceCsv": 129.0 },
+  { "category": "PUINCONTAINERS", "name": "Puin 6 m³", "unit": "stuks", "priceCsv": 139.0 },
+  { "category": "PUINCONTAINERS", "name": "Puin 10 m³", "unit": "stuks", "priceCsv": 199.0 },
+  { "category": "PUINCONTAINERS", "name": "Puin 20 m³", "unit": "stuks", "priceCsv": 350.0 },
+  { "category": "PUINCONTAINERS", "name": "Puin 40 m³", "unit": "stuks", "priceCsv": 550.0 },
+
+  { "category": "GRONDCONTAINERS VERVUILD", "name": "Grond 3 m³", "unit": "stuks", "priceCsv": 500.0 },
+  { "category": "GRONDCONTAINERS VERVUILD", "name": "Grond 6 m³", "unit": "stuks", "priceCsv": 600.0 },
+  { "category": "GRONDCONTAINERS VERVUILD", "name": "Grond 10 m³", "unit": "stuks", "priceCsv": 700.0 },
+  { "category": "GRONDCONTAINERS VERVUILD", "name": "Grond 15 m³", "unit": "stuks", "priceCsv": 1100.0 },
+
+  { "category": "OVERIG", "name": "Transformator plaatsen (in-lite)", "unit": "stuk", "priceCsv": 80 },
+  { "category": "OVERIG", "name": "Grondkabel aanleggen en ingraven", "unit": "m¹", "priceCsv": 10 },
+  { "category": "OVERIG", "name": "Tuinverlichting plaatsen en aansluiten", "unit": "punt", "priceCsv": 30 },
+  { "category": "OVERIG", "name": "Complete aanleg tuinverlichting", "unit": "klus", "priceCsv": 225 },
+  { "category": "OVERIG", "name": "Voorrijkosten", "unit": "stuks", "priceCsv": 65.0 },
+  { "category": "OVERIG", "name": "Brandstofkosten machines", "unit": "dag/machines", "priceCsv": 25.0 }
+];
+
+const overridePrices = {
+  "Bestrating uitbreken": 15.0,
+  "Herbestarten stenen": 25.0,
+  "Bestrating aanleggen tegels nieuw": 45.0,
+  "bestrating aanleggen stenen nieuw": 40.0,
+  "Tegels zagen": 12.0,
+  "Pasmaken dmv knippen": 10.0,
+  "Voegen van tuin (excl. materiaal)": 12.0,
+  "Verwijderen van voegsel aan oude tegels": 10.0,
+  "Puin afvoeren": 20.0,
+  "Grond afgraven": 18.0,
+  "Zand aanbrengen": 35.0,
+  "Teelaarde leveren": 40.0,
+  "Tuinaarde leveren": 38.0,
+  "schrale grond leveren": 32.0,
+  "Vulgrond leveren": 25.0,
+  "Compost leveren": 45.0,
+  "Boom plaatsen": 75.0,
+  "Beplanten": 25.0,
+  "Straatzand leveren": 35.0,
+  "BigBag zand incl. levering": 85.0,
+  "BigBag teelaarde incl. levering": 115.0,
+  "BigBag schrale grond incl. levering": 95.0,
+  "BigBag vulgrond incl. levering": 75.0,
+  "Stratenmaker": 60.0,
+  "Opperman": 45.0
+};
+
+function getEffectivePrice(name, csvPrice) {
+  const o = overridePrices[name];
+  if (typeof o === "number") {
+    return Math.max(csvPrice, o);
+  }
+  return csvPrice;
+}
+
+const items = itemsFromCsv.map((it, idx) => ({
+  id: idx,
+  category: it.category || "",
+  name: it.name,
+  unit: it.unit,
+  priceCsv: it.priceCsv,
+  price: getEffectivePrice(it.name, it.priceCsv),
+  qty: 0,
+}));
+
+const bodyEl = document.getElementById("itemsBody");
+const searchInput = document.getElementById("searchInput");
+const voorrijToggle = document.getElementById("voorrijToggle");
+const offerteText = document.getElementById("offerteText");
+const klantNaamInput = document.getElementById("klantNaam");
+const projectNaamInput = document.getElementById("projectNaam");
+const plaatsDatumInput = document.getElementById("plaatsDatum");
+
+let activeFilter = "ALL";
+
+function formatEuro(v) {
+  return "€" + v.toFixed(2).replace(".", ",");
+}
+
+function renderRows() {
+  const term = searchInput.value.toLowerCase();
+  bodyEl.innerHTML = "";
+  for (const it of items) {
+    if (activeFilter === "STRAATWERK" && it.category !== "STRAATWERK") continue;
+    if (activeFilter === "GRONDWERK" && it.category !== "GRONDWERK") continue;
+    if (activeFilter === "PVC" && it.category !== "PVC") continue;
+    if (activeFilter === "CONTAINERS" && !it.category.toUpperCase().includes("CONTAINER")) continue;
+    if (activeFilter === "VERHUUR" && it.category !== "VERHUUR") continue;
+    if (activeFilter === "OVERIG" && it.category !== "OVERIG") continue;
+
+    if (term && !it.name.toLowerCase().includes(term)) continue;
+
+    const tr = document.createElement("tr");
+    tr.className = "item-row";
+
+    const tdCat = document.createElement("td");
+    tdCat.textContent = it.category || "-";
+
+    const tdName = document.createElement("td");
+    tdName.textContent = it.name;
+
+    const tdUnit = document.createElement("td");
+    tdUnit.textContent = it.unit || "";
+
+    const tdPrice = document.createElement("td");
+    tdPrice.className = "right";
+    tdPrice.textContent = formatEuro(it.price);
+
+    const tdQty = document.createElement("td");
+    tdQty.className = "right";
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.min = "0";
+    inp.step = "0.01";
+    inp.value = it.qty || "";
+    inp.style.width = "70px";
+    inp.addEventListener("input", () => {
+      it.qty = parseFloat(inp.value.replace(",", ".")) || 0;
+      const lineTotal = (it.qty || 0) * it.price;
+      tdTotal.textContent = lineTotal ? formatEuro(lineTotal) : "€0,00";
+      updateTotals();
+    });
+    tdQty.appendChild(inp);
+
+    const tdTotal = document.createElement("td");
+    tdTotal.className = "right";
+    const lineTotal = (it.qty || 0) * it.price;
+    tdTotal.textContent = lineTotal ? formatEuro(lineTotal) : "€0,00";
+
+    tr.appendChild(tdCat);
+    tr.appendChild(tdName);
+    tr.appendChild(tdUnit);
+    tr.appendChild(tdPrice);
+    tr.appendChild(tdQty);
+    tr.appendChild(tdTotal);
+
+    bodyEl.appendChild(tr);
+  }
+}
+
+function calculateTotals() {
+  let subtotal = 0;
+  for (const it of items) {
+    if (!it.qty) continue;
+    subtotal += it.qty * it.price;
+  }
+  if (voorrijToggle.checked) {
+    subtotal += 65;
+  }
+  const btw = subtotal * 0.21;
+  const incl = subtotal + btw;
+  return { subtotal, btw, incl };
+}
+
+function updateTotals() {
+  const t = calculateTotals();
+  document.getElementById("subExcl").textContent = formatEuro(t.subtotal);
+  document.getElementById("btw").textContent = formatEuro(t.btw);
+  document.getElementById("totalIncl").textContent = formatEuro(t.incl);
+}
+
+searchInput.addEventListener("input", () => { renderRows(); });
+voorrijToggle.addEventListener("change", () => { updateTotals(); });
+
+// Filter-knoppen
+const allBtn = document.getElementById("allBtn");
+const straatwerkBtn = document.getElementById("straatwerkBtn");
+const grondwerkBtn = document.getElementById("grondwerkBtn");
+const pvcBtn = document.getElementById("pvcBtn");
+const containersBtn = document.getElementById("containersBtn");
+const verhuurBtn = document.getElementById("verhuurBtn");
+const overigBtn = document.getElementById("overigBtn");
+
+function setFilter(filter) {
+  activeFilter = filter;
+  for (const btn of [allBtn, straatwerkBtn, grondwerkBtn, pvcBtn, containersBtn, verhuurBtn, overigBtn]) {
+    btn.classList.remove("active");
+  }
+  if (filter === "ALL") allBtn.classList.add("active");
+  if (filter === "STRAATWERK") straatwerkBtn.classList.add("active");
+  if (filter === "GRONDWERK") grondwerkBtn.classList.add("active");
+  if (filter === "PVC") pvcBtn.classList.add("active");
+  if (filter === "CONTAINERS") containersBtn.classList.add("active");
+  if (filter === "VERHUUR") verhuurBtn.classList.add("active");
+  if (filter === "OVERIG") overigBtn.classList.add("active");
+  renderRows();
+}
+
+allBtn.addEventListener("click", () => setFilter("ALL"));
+straatwerkBtn.addEventListener("click", () => setFilter("STRAATWERK"));
+grondwerkBtn.addEventListener("click", () => setFilter("GRONDWERK"));
+pvcBtn.addEventListener("click", () => setFilter("PVC"));
+containersBtn.addEventListener("click", () => setFilter("CONTAINERS"));
+verhuurBtn.addEventListener("click", () => setFilter("VERHUUR"));
+overigBtn.addEventListener("click", () => setFilter("OVERIG"));
+
+// Offertetekst generator
+document.getElementById("genTextBtn").addEventListener("click", () => {
+  const t = calculateTotals();
+  const regels = [];
+
+  const klant = klantNaamInput.value.trim();
+  const project = projectNaamInput.value.trim();
+  const plaatsDatum = plaatsDatumInput.value.trim();
+
+  if (plaatsDatum) {
+    regels.push(plaatsDatum);
+    regels.push("");
+  }
+
+  if (klant) {
+    regels.push("Geachte " + klant + ",");
+  } else {
+    regels.push("Geachte heer/mevrouw,");
+  }
+
+  regels.push("");
+  regels.push("Hartelijk dank voor uw aanvraag.");
+  regels.push("Hierbij ontvangt u onze offerte voor het uitvoeren van de onderstaande werkzaamheden:");
+  regels.push("");
+
+  if (project) {
+    regels.push(project);
+    regels.push("");
+  }
+
+  regels.push("Werkzaamheden:");
+  
+  for (const it of items) {
+    if (!it.qty) continue;
+    const lineTotal = it.qty * it.price;
+    const eenh = it.unit ? " " + it.unit : "";
+    regels.push("• " + it.qty.toString().replace(".", ",") + eenh + " " + it.name + " à " + formatEuro(it.price) + " = " + formatEuro(lineTotal));
+  }
+
+  if (voorrijToggle.checked) {
+    regels.push("• 1x Voorrijkosten per klus = " + formatEuro(65));
+  }
+
+  regels.push("");
+  regels.push("Subtotaal (excl. btw): " + formatEuro(t.subtotal));
+  regels.push("BTW 21%: " + formatEuro(t.btw));
+  regels.push("Totaal (incl. btw): " + formatEuro(t.incl));
+  regels.push("");
+  regels.push("Prijzen zijn vermeld exclusief eventuele meerwerkzaamheden.");
+  regels.push("");
+  regels.push("Met vriendelijke groet,");
+  regels.push("Dennis van den Akker");
+  regels.push("D van den Akker bestrating");
+
+  offerteText.value = regels.join("\n");
+});
+
+document.getElementById("selectTextBtn").addEventListener("click", () => {
+  offerteText.focus();
+  offerteText.select();
+});
+
+renderRows();
+updateTotals();
+</script>
+</body>
+</html>

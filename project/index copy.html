@@ -1,0 +1,2251 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111827">
+
+<!-- iPhone ondersteuning -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <meta charset="UTF-8" />
+  <title>Stratenmaker Tool - D van den Akker bestrating</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .sidebar {
+      width: 260px;
+      background: #111827;
+      color: #e5e7eb;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .logo-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #374151;
+    }
+    .logo-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .logo-sub {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+    .nav-section-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-top: 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+    .nav-button {
+      width: 100%;
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      background: transparent;
+      border: none;
+      border-radius: 0.5rem;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: block;
+    }
+    .nav-button:hover {
+      background: #1f2937;
+    }
+    .nav-button.active {
+      background: #2563eb;
+      color: white;
+    }
+    .main {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    .tool {
+      display: none;
+      max-width: 980px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem 1.25rem;
+      box-shadow: 0 10px 25px rgba(15,23,42,0.08);
+    }
+    .tool.active {
+      display: block;
+    }
+    .tool h1 {
+      font-size: 1.25rem;
+      margin-bottom: 0.35rem;
+    }
+    .tool p.description {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-bottom: 0.75rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-size: 0.85rem;
+    }
+    .field label {
+      font-weight: 500;
+    }
+    .field small {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+    input[type="number"],
+    select {
+      padding: 0.4rem 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      width: 100%;
+    }
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.4);
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      margin-bottom: 0.35rem;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.75rem 0;
+    }
+    .btn {
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-outline { background: transparent; border: 1px solid #d1d5db; color: #111827; }
+    .btn-secondary { background: #111827; color: #f9fafb; }
+    .results {
+      margin-top: 0.5rem;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      white-space: pre-line;
+    }
+    .divider {
+      margin: 0.75rem 0;
+      border-bottom: 1px dashed #e5e7eb;
+    }
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0.25rem 0 0.4rem;
+    }
+    .subtle {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    @media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+  }
+
+  .main {
+    padding: 0.5rem;
+  }
+
+  .tool {
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+  }
+}
+}
+
+  </style>
+</head>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js");
+  });
+}
+</script>
+
+<body>
+  <aside class="sidebar">
+    <div class="logo-box">
+      <div class="logo-title">Stratenmaker Tool</div>
+      <div class="logo-sub">D van den Akker bestrating<br>© D van den Akker</div>
+    </div>
+
+    <!-- GROND & ZAND -->
+    <div>
+      <div class="nav-section-title">Grond & zand</div>
+      <button class="nav-button active" onclick="showTool('tool-oppervlakte')">Oppervlakte & kuubs</button>
+      <button class="nav-button" onclick="showTool('tool-brekerzand')">Brekerzand afstrooien</button>
+      <button class="nav-button" onclick="showTool('tool-afschot')">Hoogte & afschot</button>
+    </div>
+
+    <!-- BANDEN -->
+    <div>
+      <div class="nav-section-title">Banden</div>
+      <button class="nav-button" onclick="showTool('tool-banden-straal')">
+        Bocht / straal & banden
+      </button>
+      <button class="nav-button" onclick="showTool('tool-banden-lijn')">
+        Rechte banden & zaagstukken
+      </button>
+    </div>
+
+    <!-- TEGELS & VOEGEN -->
+    <div>
+      <div class="nav-section-title">Tegels & voegen</div>
+      <button class="nav-button" onclick="showTool('tool-tegelvak')">Tegelvak & tegels</button>
+      <button class="nav-button" onclick="showTool('tool-tegelmaat')">Tegel-/stenenmaat uit vakbreedte</button>
+      <button class="nav-button" onclick="showTool('tool-lm-aqua')">Voegmiddel (LM Aqua)</button>
+    </div>
+
+    <!-- STENEN & KNIPPEN -->
+    <div>
+      <div class="nav-section-title">Stenen & knippen</div>
+      <button class="nav-button" onclick="showTool('tool-knip')">Kniptool (stenen & tegels)</button>
+      <button class="nav-button" onclick="showTool('tool-stenen')">Stenen-tool (m² & pakketten)</button>
+      <button class="nav-button" onclick="showTool('tool-elleboog-rand')">Elleboog rand & halve stenen</button>
+    </div>
+
+    <!-- PROJECTEN & MATERIAAL -->
+    <div>
+      <div class="nav-section-title">Projecten & materiaal</div>
+      <button class="nav-button" onclick="showTool('tool-projecten')">
+        Projecten
+      </button>
+      <button class="nav-button" onclick="showTool('tool-materialen')">
+        Materialenlijst
+      </button>
+    </div>
+
+    <!-- PVC & SCHUTTING -->
+    <div>
+      <div class="nav-section-title">PVC & schutting</div>
+      <button class="nav-button" onclick="showTool('tool-pvc')">PVC-tool</button>
+      <button class="nav-button" onclick="showTool('tool-schutting')">Beton schutting</button>
+    </div>
+  </aside>
+
+
+  <main class="main">
+    <!-- MATERIALENLIJST & PRIJZEN -->
+    <section id="tool-materialen" class="tool">
+      <h1>Materialenlijst & prijzen</h1>
+      <p class="description">
+        Koppel materialen en prijzen aan het geselecteerde project. Vul aantal, inkoop en marge in; de tool rekent verkoopprijs, totaal ex. btw en incl. btw.
+      </p>
+
+      <p class="subtle">
+        Actief project: <span id="mat-current-project">geen project geselecteerd</span>
+      </p>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="matAddRow()">➕ Nieuwe regel</button>
+        <button class="btn btn-outline" onclick="matClearRows()">🧹 Materialenlijst leegmaken</button>
+        <button class="btn btn-secondary" onclick="matSaveForProject()">💾 Materialen aan project koppelen</button>
+      </div>
+
+      <div id="mat-rows" class="results" style="background:#fff;">
+        <!-- rijen worden via JS toegevoegd -->
+        Nog geen materialen toegevoegd. Klik op “Nieuwe regel”.
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">Totaal prijzen</div>
+      <div class="results">
+        <div>Subtotaal ex. btw: <strong>€ <span id="mat-total-ex">0,00</span></strong></div>
+        <div>Totaal btw: <strong>€ <span id="mat-total-btw">0,00</span></strong></div>
+        <div>Totaal incl. btw: <strong>€ <span id="mat-total-inc">0,00</span></strong></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">Materialenlijst exporteren</div>
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="matCopySummary()">📤 Kopieer samenvatting</button>
+      </div>
+    </section>
+
+
+    <!-- PROJECTEN-TOOL -->
+    <section id="tool-projecten" class="tool">
+      <h1>Projecten</h1>
+      <p class="description">
+        Beheer projecten (klussen) en koppel berekende onderdelen en materialen. Projecten worden lokaal opgeslagen in je browser.
+      </p>
+
+      <div class="section-title">Project kiezen of nieuw project maken</div>
+      <div class="grid">
+        <div class="field">
+          <label for="proj-select">Bestaand project</label>
+          <select id="proj-select" onchange="projSelectChanged()">
+            <option value="">– Kies een project –</option>
+          </select>
+          <small>Projecten worden lokaal opgeslagen (localStorage).</small>
+        </div>
+        <div class="field">
+          <label for="proj-name">Projectnaam</label>
+          <input type="text" id="proj-name" placeholder="Bijv. Oprit Jansen – 45 m²" />
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label for="proj-notes">Notities / omschrijving</label>
+          <textarea id="proj-notes" rows="5" style="width:100%; padding:0.5rem; border-radius:0.5rem; border:1px solid #d1d5db; font-size:0.9rem;"></textarea>
+          <small>Bijv. ligging, bijzonderheden, kleuren, afspraken.</small>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="projSave()">💾 Project opslaan</button>
+        <button class="btn btn-outline" onclick="projNew()">🆕 Nieuw project</button>
+        <button class="btn btn-outline" onclick="projDelete()">🗑️ Verwijderen</button>
+      </div>
+
+      <div class="results" id="proj-status">
+        Geen project geselecteerd. Maak een nieuw project of kies er één uit de lijst.
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">Gekoppelde onderdelen uit tools</div>
+      <p class="subtle">
+        Gebruik de 💾 Opslaan-knop bij andere tools om hun resultaat aan het huidige project te koppelen.
+      </p>
+
+      <div id="proj-snippets" class="results">
+        Nog geen onderdelen gekoppeld aan dit project.
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">Project exporteren (tekst)</div>
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="projDownloadTxt()">📥 Download project als TXT</button>
+        <button class="btn btn-outline" onclick="projCopyTxt()">📤 Kopieer projecttekst</button>
+      </div>
+    </section>
+
+    <!-- OPPERVLAKTE & KUUBS -->
+    <section id="tool-oppervlakte" class="tool active">
+      <h1>Oppervlakte & kuubs</h1>
+      <p class="description">
+        Bereken m², m³ vaste grond en losgestorte inhoud, plus kruiwagens en bakken.
+      </p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="opp-lengte">Lengte (m)</label>
+          <input type="number" id="opp-lengte" value="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="opp-breedte">Breedte (m)</label>
+          <input type="number" id="opp-breedte" value="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="opp-diepte">Diepte (cm)</label>
+          <input type="number" id="opp-diepte" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="opp-materiaal">Materiaal / grondsoort</label>
+          <select id="opp-materiaal">
+            <option value="1.2">Vaste grond (factor 1,20)</option>
+            <option value="1.1">Zand (factor 1,10)</option>
+            <option value="1.3">Korrel / puin (factor 1,30)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenOppervlakte()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-oppervlakte')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-oppervlakte','oppervlakte-kuubs')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-oppervlakte')">📤 Delen</button>
+      </div>
+
+      <div id="result-oppervlakte" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+    <!-- BREKERZAND -->
+    <section id="tool-brekerzand" class="tool">
+      <h1>Brekerzand – afstrooien</h1>
+      <p class="description">
+        Bereken hoeveel brekerzand je nodig hebt om bestrating af te strooien (3 kg/m²), plus m³ en kruiwagens.
+      </p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="breker-opp">Oppervlakte (m²)</label>
+          <input type="number" id="breker-opp" value="0" step="0.01" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenBrekerzand()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-brekerzand')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-brekerzand','brekerzand')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-brekerzand')">📤 Delen</button>
+      </div>
+
+      <div id="result-brekerzand" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+    <!-- HOOGTE & AFSCHOT -->
+    <section id="tool-afschot" class="tool">
+      <h1>Hoogte & afschot</h1>
+      <p class="description">
+        Bereken opbouw (steen, zand, korrel), afschot in %, en referentiehoogtes per meter.
+      </p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="afs-ref">Referentie (cm)</label>
+          <input type="number" id="afs-ref" value="0" step="0.1" />
+          <small>Bijv. dorpel = 0 cm.</small>
+        </div>
+        <div class="field">
+          <label for="afs-steen">Steendikte (cm)</label>
+          <input type="number" id="afs-steen" value="8" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="afs-zand">Zandlaag (cm)</label>
+          <input type="number" id="afs-zand" value="5" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="afs-korrel">Korrellaag (cm)</label>
+          <input type="number" id="afs-korrel" value="25" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="afs-lengte">Lengte (m)</label>
+          <input type="number" id="afs-lengte" value="0" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="afs-hoogteverschil">Hoogteverschil over lengte (cm)</label>
+          <input type="number" id="afs-hoogteverschil" value="-2" step="0.1" />
+          <small>Negatief = afschot van referentie af.</small>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenAfschot()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-afschot')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-afschot','hoogte-afschot')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-afschot')">📤 Delen</button>
+      </div>
+
+      <div id="result-afschot" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+    <!-- BANDEN: STRAAL / BOCHT -->
+    <section id="tool-banden-straal" class="tool">
+      <h1>Bocht / straal & banden</h1>
+      <p class="description">
+        Bereken bochtomtrek, aantal banden en zaagstukken, met bochtband (0,785 m) of rechte band (1,0 m) en 50 cm-regel.
+      </p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="band-straal">Straal (m)</label>
+          <input type="number" id="band-straal" value="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="band-bocht-type">Bochttype</label>
+          <select id="band-bocht-type">
+            <option value="1">Hele cirkel (360°)</option>
+            <option value="0.25">Kwart bocht (90°)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="band-type">Bandtype</label>
+          <select id="band-type">
+            <option value="0.785">Bochtband 78,5 cm</option>
+            <option value="1">Rechte band 1,00 m</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="band-voeg-cm">Voeg tussen banden (cm)</label>
+          <input type="number" id="band-voeg-cm" value="0" step="0.1" />
+        </div>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="band-50cm" />
+        <label for="band-50cm">50 cm-regel toepassen (zaagstuk nooit korter dan 50 cm)</label>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenBandStraal()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-banden-straal')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-banden-straal','banden-straal')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-banden-straal')">📤 Delen</button>
+      </div>
+
+      <div id="result-banden-straal" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+    <!-- BANDEN: RECHTE LIJN -->
+    <section id="tool-banden-lijn" class="tool">
+      <h1>Rechte banden & zaagstukken</h1>
+      <p class="description">
+        Bereken aantal rechte banden van 1,0 m en zaagstuk, met optie 50 cm-regel.
+      </p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="band-lengte-lijn">Totale bandenlijn (m)</label>
+          <input type="number" id="band-lengte-lijn" value="0" step="0.01" />
+        </div>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="band-lijn-50cm" />
+        <label for="band-lijn-50cm">50 cm-regel toepassen (laatste zaagstuk nooit korter dan 50 cm)</label>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenBandLijn()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-banden-lijn')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-banden-lijn','banden-lijn')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-banden-lijn')">📤 Delen</button>
+      </div>
+
+      <div id="result-banden-lijn" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+    <!-- TEGELVAK & TEGELS -->
+    <section id="tool-tegelvak" class="tool">
+      <h1>Tegelvak & tegels</h1>
+      <p class="description">
+        Bereken m² van het vak en optioneel hoeveel tegels/stenen je nodig hebt (incl. snijverlies) en modulemaat.
+      </p>
+
+      <div class="section-title">Oppervlakte</div>
+      <div class="grid">
+        <div class="field">
+          <label for="tegelvak-lengte">Lengte (m)</label>
+          <input type="number" id="tegelvak-lengte" value="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="tegelvak-breedte">Breedte (m)</label>
+          <input type="number" id="tegelvak-breedte" value="0" step="0.01" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="tegelvak-steen-toggle" onchange="toggleTegelvakDetails()" />
+        <label for="tegelvak-steen-toggle">Steen / tegel koppelen aan dit vak</label>
+      </div>
+
+      <div id="tegelvak-details" style="display:none;">
+        <div class="section-title">Steen / tegel & snijverlies</div>
+        <div class="grid">
+          <div class="field">
+            <label for="tegelvak-type">Type</label>
+            <select id="tegelvak-type">
+              <option value="tegel">Tegels</option>
+              <option value="steen">Stenen (klinkers)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="tegelvak-formaat">Formaat</label>
+            <select id="tegelvak-formaat" onchange="toggleTegelvakEigenMaat()">
+              <option value="60x60">60 × 60 cm</option>
+              <option value="80x80">80 × 80 cm</option>
+              <option value="100x100">100 × 100 cm</option>
+              <option value="eigen">Eigen maat</option>
+            </select>
+          </div>
+          <div class="field" id="tegelvak-eigen-l" style="display:none;">
+            <label for="tegelvak-lengte-cm">Tegellengte (cm)</label>
+            <input type="number" id="tegelvak-lengte-cm" value="0" step="0.1" />
+          </div>
+          <div class="field" id="tegelvak-eigen-b" style="display:none;">
+            <label for="tegelvak-breedte-cm">Tegelbreedte (cm)</label>
+            <input type="number" id="tegelvak-breedte-cm" value="0" step="0.1" />
+          </div>
+          <div class="field">
+            <label for="tegelvak-voeg-mm">Voegbreedte (mm)</label>
+            <input type="number" id="tegelvak-voeg-mm" value="3" step="0.5" />
+          </div>
+          <div class="field">
+            <label for="tegelvak-snijverlies">Snijverlies (%)</label>
+            <input type="number" id="tegelvak-snijverlies" value="3" step="0.5" />
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenTegelvak()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-tegelvak')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-tegelvak','tegelvak')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-tegelvak')">📤 Delen</button>
+      </div>
+
+      <div id="result-tegelvak" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+    <!-- TEGEL-/STENENMAAT UIT VAKBREEDTE -->
+    <section id="tool-tegelmaat" class="tool">
+      <h1>Tegel-/stenenmaat uit vakbreedte</h1>
+      <p class="description">
+        Vul vakbreedte in en kies een steen/tegel + voeg om te zien welke stenenmaat (aantal stenen) het beste past.
+      </p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="mod-vak-breedte">Vakbreedte (m)</label>
+          <input type="number" id="mod-vak-breedte" value="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="mod-type">Type</label>
+          <select id="mod-type" onchange="toggleModEigenMaat()">
+            <option value="bkk">BKK 21×10,5 in elleboog (10,5 cm kniplijn)</option>
+            <option value="waal">Waaltje (lengte als maat)</option>
+            <option value="tegel60">Tegel 60×60</option>
+            <option value="tegel60">Tegel 30×30</option>
+            <option value="eigen">Eigen maat</option>
+          </select>
+        </div>
+        <div class="field" id="mod-eigen-l" style="display:none;">
+          <label for="mod-lengte-cm">Steen/tegel lengte in richting (cm)</label>
+          <input type="number" id="mod-lengte-cm" value="0" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="mod-voeg-mm">Voegbreedte (mm)</label>
+          <input type="number" id="mod-voeg-mm" value="0" step="0.5" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenModMaat()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-tegelmaat')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-tegelmaat','tegel-stenenmaat')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-tegelmaat')">📤 Delen</button>
+      </div>
+
+      <div id="result-tegelmaat" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+    <!-- LM AQUA -->
+    <section id="tool-lm-aqua" class="tool">
+      <h1>Voegmiddel (LM Aqua)</h1>
+      <p class="description">
+        Bereken hoeveel LM Aqua je nodig hebt in kg en emmers van 12,5 kg, op basis van m², voegbreedte en diepte.
+      </p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="lm-opp">Oppervlakte (m²)</label>
+          <input type="number" id="lm-opp" value="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="lm-voeg-mm">Voegbreedte (mm)</label>
+          <input type="number" id="lm-voeg-mm" value="3" step="0.5" />
+        </div>
+        <div class="field">
+          <label for="lm-diepte-mm">Voegdiepte (mm)</label>
+          <input type="number" id="lm-diepte-mm" value="30" step="1" />
+          <small>Bijv. tegeldikte of (deel van) tegeldikte.</small>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenLMAqua()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-lm-aqua')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-lm-aqua','lm-aqua')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-lm-aqua')">📤 Delen</button>
+      </div>
+
+      <div id="result-lm-aqua" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+    <!-- KNIPTOOL -->
+    <section id="tool-knip" class="tool">
+      <h1>Kniptool – stenen & tegels</h1>
+      <p class="description">
+        Bereken knipstenen of kniptegels, lagen, puinvolume en kruiwagens. Inclusief keperwerk met prefab bisschopmutsen.
+      </p>
+
+      <div class="field">
+        <label for="knip-materiaal">Materiaal</label>
+        <select id="knip-materiaal" onchange="toggleKnipMateriaal()">
+          <option value="steen">Stenen</option>
+          <option value="tegel">Tegels</option>
+        </select>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- STENEN KNIP -->
+      <div id="knip-stenen-block">
+        <div class="section-title">Stenen knippen</div>
+        <div class="grid">
+          <div class="field">
+            <label for="knip-stenen-lengte">Lengte muur/lijn (m)</label>
+            <input type="number" id="knip-stenen-lengte" value="0" step="0.01" />
+          </div>
+          <div class="field">
+            <label for="knip-stenen-breedte-cm">Steenbreedte in kniplijn (cm)</label>
+            <input type="number" id="knip-stenen-breedte-cm" value="10.5" step="0.1" />
+            <small>Bij BKK meestal 10,5 cm.</small>
+          </div>
+          <div class="field">
+            <label for="knip-stenen-lengte-cm">Steenlengte (cm)</label>
+            <input type="number" id="knip-stenen-lengte-cm" value="21" step="0.1" />
+          </div>
+          <div class="field">
+            <label for="knip-stenen-dikte-cm">Steendikte (cm)</label>
+            <input type="number" id="knip-stenen-dikte-cm" value="8" step="0.1" />
+          </div>
+          <div class="field">
+            <label for="knip-stenen-banen">Aantal banen/rijen</label>
+            <input type="number" id="knip-stenen-banen" value="1" step="1" />
+          </div>
+          <div class="field">
+            <label for="knip-stenen-verband">Verband</label>
+            <select id="knip-stenen-verband">
+              <option value="recht">Recht / elleboog</option>
+              <option value="keper">Keper 45°</option>
+            </select>
+          </div>
+          <div class="field" id="knip-stenen-bisschop-wrapper">
+            <label>Bisschopmutsen (alleen keper)</label>
+            <select id="knip-stenen-bisschop-type">
+              <option value="geen">Geen</option>
+              <option value="prefab">Prefab bisschopmutsen</option>
+              <option value="gezaagd">Gezaagd uit BKK</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEGEL KNIP -->
+      <div id="knip-tegels-block" style="display:none;">
+        <div class="section-title">Tegels knippen</div>
+        <div class="grid">
+          <div class="field">
+            <label for="knip-tegel-lengte">Lengte lijn (m)</label>
+            <input type="number" id="knip-tegel-lengte" value="0" step="0.01" />
+          </div>
+          <div class="field">
+            <label for="knip-tegel-banen">Aantal banen/rijen</label>
+            <input type="number" id="knip-tegel-banen" value="1" step="1" />
+          </div>
+          <div class="field">
+            <label for="knip-tegel-formaat">Formaat</label>
+            <select id="knip-tegel-formaat" onchange="toggleKnipTegelEigenMaat()">
+              <option value="60x60">60 × 60 cm</option>
+              <option value="80x80">80 × 80 cm</option>
+              <option value="eigen">Eigen maat</option>
+            </select>
+          </div>
+          <div class="field" id="knip-tegel-eigen-l" style="display:none;">
+            <label for="knip-tegel-lengte-cm">Tegellengte (cm)</label>
+            <input type="number" id="knip-tegel-lengte-cm" value="0" step="0.1" />
+          </div>
+          <div class="field" id="knip-tegel-eigen-b" style="display:none;">
+            <label for="knip-tegel-breedte-cm">Tegelbreedte (cm)</label>
+            <input type="number" id="knip-tegel-breedte-cm" value="0" step="0.1" />
+          </div>
+          <div class="field">
+            <label for="knip-tegel-voeg-mm">Voegbreedte (mm)</label>
+            <input type="number" id="knip-tegel-voeg-mm" value="3" step="0.5" />
+          </div>
+          <div class="field">
+            <label for="knip-tegel-dikte-cm">Tegeldikte (cm)</label>
+            <input type="number" id="knip-tegel-dikte-cm" value="4" step="0.1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenKniptool()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-knip')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-knip','kniptool')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-knip')">📤 Delen</button>
+      </div>
+
+      <div id="result-knip" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+    <!-- STENEN-TOOL -->
+    <section id="tool-stenen" class="tool">
+      <h1>Stenen-tool (m² & pakketten)</h1>
+      <p class="description">
+        Bereken stenen per meter en per m², totaal aantal stenen voor een vak en aantal lagen/pakketten (voor BKK).
+      </p>
+
+      <div class="section-title">Steensoort & verband</div>
+      <div class="grid">
+        <div class="field">
+          <label for="stenen-type">Steensoort</label>
+          <select id="stenen-type" onchange="toggleStenenEigenMaat()">
+            <option value="bkk">BKK 21×10,5×8 cm (machinaal)</option>
+            <option value="waal">Waaltje 20×5×7 cm</option>
+            <option value="dik">Dikformaat 21×7×7 cm</option>
+            <option value="eigen">Eigen steenmaat</option>
+          </select>
+        </div>
+        <div class="field" id="stenen-eigen-l" style="display:none;">
+          <label for="stenen-lengte-cm">Steenlengte (cm)</label>
+          <input type="number" id="stenen-lengte-cm" value="0" step="0.1" />
+        </div>
+        <div class="field" id="stenen-eigen-b" style="display:none;">
+          <label for="stenen-breedte-cm">Steenbreedte (cm)</label>
+          <input type="number" id="stenen-breedte-cm" value="0" step="0.1" />
+        </div>
+        <div class="field" id="stenen-eigen-d" style="display:none;">
+          <label for="stenen-dikte-cm">Steendikte (cm)</label>
+          <input type="number" id="stenen-dikte-cm" value="0" step="0.1" />
+        </div>
+        <div class="field">
+          <label for="stenen-verband">Verband</label>
+          <select id="stenen-verband">
+            <option value="elleboog">Elleboogverband</option>
+            <option value="half">Halfsteens</option>
+            <option value="strek">Strekverband</option>
+            <option value="keper">Keper 45°</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="stenen-voeg-mm">Voegbreedte (mm)</label>
+          <input type="number" id="stenen-voeg-mm" value="0" step="0.5" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">Vak-berekening</div>
+      <div class="grid">
+        <div class="field">
+          <label for="stenen-vak-l">Lengte vak (m)</label>
+          <input type="number" id="stenen-vak-l" value="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="stenen-vak-b">Breedte vak (m)</label>
+          <input type="number" id="stenen-vak-b" value="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="stenen-banen">Aantal banen (voor keper/vak)</label>
+          <input type="number" id="stenen-banen" value="1" step="1" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenStenenTool()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-stenen')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-stenen','stenen-tool')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-stenen')">📤 Delen</button>
+      </div>
+
+            </div>
+
+      <div id="result-stenen" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+
+    <!-- ELLEBOOG RAND & HALVE STENEN -->
+    <section id="tool-elleboog-rand" class="tool">
+      <h1>Elleboog rand & halve stenen</h1>
+      <p class="description">
+        Bereken halve stenen langs de rand bij elleboogverband.
+      </p>
+
+      <div class="grid">
+        <div class="field">
+          <label>Omtrek rand (m)</label>
+          <input type="number" id="elleboog-omtrek" step="0.01" value="0">
+        </div>
+
+        <div class="field">
+          <label>Steensoort</label>
+          <select id="elleboog-type">
+            <option value="21">BKK 21 × 10,5</option>
+            <option value="20">Waaltjes</option>
+            <option value="21">Dikformaat</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenElleboogRand()">Bereken</button>
+      </div>
+
+      <div id="result-elleboog" class="results">
+        Nog geen berekening uitgevoerd.
+      </div>
+    </section>
+
+
+    <!-- PVC-TOOL -->
+    <section id="tool-pvc" class="tool">
+        <div class="field">
+          <label for="pvc-1m">Aantal lengtes 1 m</label>
+          <input type="number" id="pvc-1m" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-3m">Aantal lengtes 3 m</label>
+          <input type="number" id="pvc-3m" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-5m">Aantal lengtes 5 m</label>
+          <input type="number" id="pvc-5m" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-rest">Restlengte totaal (m)</label>
+          <input type="number" id="pvc-rest" value="0" step="0.01" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">Koppelingen</div>
+      <div class="grid">
+        <div class="field">
+          <label for="pvc-schuifmof">Schuifmof</label>
+          <input type="number" id="pvc-schuifmof" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-steekmof">Steekmof</label>
+          <input type="number" id="pvc-steekmof" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-bocht15">Bocht 15°</label>
+          <input type="number" id="pvc-bocht15" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-bocht30">Bocht 30°</label>
+          <input type="number" id="pvc-bocht30" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-bocht45">Bocht 45°</label>
+          <input type="number" id="pvc-bocht45" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-bocht90">Bocht 90°</label>
+          <input type="number" id="pvc-bocht90" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-tstuk">T-stuk</label>
+          <input type="number" id="pvc-tstuk" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-ystuk">Y-stuk</label>
+          <input type="number" id="pvc-ystuk" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="pvc-onst">Ontstoppingsstuk</label>
+          <input type="number" id="pvc-onst" value="0" step="1" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenPVC()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-pvc')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-pvc','pvc-tool')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-pvc')">📤 Delen</button>
+      </div>
+
+      <div id="result-pvc" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+
+    <!-- SCHUTTING -->
+    <section id="tool-schutting" class="tool">
+      <h1>Beton schutting</h1>
+      <p class="description">
+        Bereken aantal panelen, palen, onderplaten, zakjes en poortpalen voor een schutting.
+      </p>
+
+      <div class="grid">
+        <div class="field">
+          <label for="schut-lengte">Totale schuttinglengte (m)</label>
+          <input type="number" id="schut-lengte" value="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="schut-paneel">Paneellengte (m)</label>
+          <input type="number" id="schut-paneel" value="1.8" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="schut-paalbreedte">Paalbreedte (m)</label>
+          <input type="number" id="schut-paalbreedte" value="0.10" step="0.01" />
+        </div>
+        <div class="field">
+          <label for="schut-poorten">Aantal poorten</label>
+          <input type="number" id="schut-poorten" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="schut-poortbreedte">Poortbreedte incl. kozijn (m)</label>
+          <input type="number" id="schut-poortbreedte" value="1.08" step="0.01" />
+          <small>Bijv. 1,08 m voor poort 1,0 m.</small>
+        </div>
+        <div class="field">
+          <label for="schut-hoek">Aantal hoekpalen extra</label>
+          <input type="number" id="schut-hoek" value="0" step="1" />
+        </div>
+        <div class="field">
+          <label for="schut-eind">Aantal eindpalen extra</label>
+          <input type="number" id="schut-eind" value="0" step="1" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="berekenSchutting()">Bereken</button>
+        <button class="btn btn-secondary" onclick="saveToolResult('result-schutting')">💾 Opslaan</button>
+        <button class="btn btn-outline" onclick="downloadResult('result-schutting','schutting')">📥 Download</button>
+        <button class="btn btn-outline" onclick="shareResult('result-schutting')">📤 Delen</button>
+      </div>
+
+      <div id="result-schutting" class="results">
+        Resultaten verschijnen hier na berekenen.
+      </div>
+    </section>
+<section id="tool-elleboog-rand" class="tool">
+  <h1>Elleboog rand & halve stenen</h1>
+  <p class="description">
+    Berekening halve stenen langs rand in elleboogverband.
+  </p>
+
+  <div class="grid">
+    <div class="field">
+      <label>Omtrek (m)</label>
+      <input type="number" id="elleboog-omtrek" step="0.01" value="0">
+    </div>
+
+    <div class="field">
+      <label>Steensoort</label>
+      <select id="elleboog-type">
+        <option value="21">BKK 21 × 10,5</option>
+        <option value="20">Waaltjes</option>
+        <option value="21">Dikformaat</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="berekenElleboogRand()">Bereken</button>
+  </div>
+
+  <div id="result-elleboog" class="results">
+    Nog geen berekening uitgevoerd.
+  </div>
+</section>
+  
+</main>
+  <script>
+  // ========================================================
+  // TOOL NAVIGATIE
+  // ========================================================
+  function showTool(id) {
+    document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+    const toolEl = document.getElementById(id);
+    if (toolEl) toolEl.classList.add('active');
+
+    document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+    const allButtons = document.querySelectorAll('.nav-button');
+    allButtons.forEach(btn => {
+      if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(id)) {
+        btn.classList.add('active');
+      }
+    });
+
+    // Extra: bij openen materialen/projecten even syncen
+    if (id === 'tool-materialen' && typeof matOnOpen === 'function') {
+      matOnOpen();
+    }
+    if (id === 'tool-projecten' && typeof projOnOpen === 'function') {
+      projOnOpen();
+    }
+  }
+
+  // ========================================================
+  // RESULTATEN OPSLAAN / DELEN / DOWNLOADEN
+  // ========================================================
+  function saveToolResult(resultId) {
+    const el = document.getElementById(resultId);
+    if (!el) return;
+
+    if (!projCurrentId || !projData[projCurrentId]) {
+      alert('Geen project geselecteerd.\nGa eerst naar "Projecten", maak of kies een project en sla deze op.');
+      return;
+    }
+
+    const text = el.innerText || el.textContent || '';
+    if (!text.trim()) {
+      alert('Er is nog geen resultaat om op te slaan. Bereken eerst.');
+      return;
+    }
+
+    const label = prompt('Korte omschrijving voor dit onderdeel (bijv. "Terras 45 m²", "Oprit cunet", "Schutting 18 m"):', '');
+    const now = new Date().toLocaleString();
+
+    const p = projEnsureExtras(projData[projCurrentId]);
+    p.toolSnippets.push({
+      id: "snip_" + Date.now() + "_" + Math.floor(Math.random() * 9999),
+      label: label || '',
+      text,
+      created: now
+    });
+
+    projData[projCurrentId] = p;
+    projSaveToStorage();
+    projRenderSnippets();
+
+    alert('Onderdeel opgeslagen bij project "' + (p.name || '') + '".');
+  }
+
+  function downloadResult(resultId, filename) {
+    const el = document.getElementById(resultId);
+    if (!el) return;
+    const text = el.innerText || el.textContent || '';
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function shareResult(resultId) {
+    const el = document.getElementById(resultId);
+    if (!el) return;
+    const text = el.innerText || el.textContent || '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Resultaat gekopieerd naar klembord.\nPlak het in WhatsApp, e-mail, enz.');
+      }).catch(() => {
+        alert('Kon niet kopiëren. Selecteer en kopieer de tekst handmatig.');
+      });
+    } else {
+      alert('Selecteer en kopieer de tekst handmatig.');
+    }
+  }
+
+  // ========================================================
+  // BESTAANDE REKENFUNCTIES (ONGEWIJZIGD)
+  // ========================================================
+  function berekenOppervlakte() {
+    const L = parseFloat(document.getElementById('opp-lengte').value) || 0;
+    const B = parseFloat(document.getElementById('opp-breedte').value) || 0;
+    const Dcm = parseFloat(document.getElementById('opp-diepte').value) || 0;
+    const factor = parseFloat(document.getElementById('opp-materiaal').value) || 1.0;
+    const opp = L * B;
+    const Dm = Dcm / 100;
+    const m3_vast = opp * Dm;
+    const m3_los = m3_vast * factor;
+    const krui80 = m3_los / 0.08;
+    const krui100 = m3_los / 0.10;
+    const bak008 = m3_los / 0.08;
+    const bak05 = m3_los / 0.5;
+    const res = [];
+    res.push(`Oppervlakte: ${opp.toFixed(2)} m²`);
+    res.push(`Inhoud (vast): ${m3_vast.toFixed(3)} m³`);
+    res.push(`Inhoud (los, factor ${factor.toFixed(2)}): ${m3_los.toFixed(3)} m³`);
+    res.push('');
+    res.push(`Kruiwagens (80L): ${krui80.toFixed(1)} stuks`);
+    res.push(`Kruiwagens (100L): ${krui100.toFixed(1)} stuks`);
+    res.push('');
+    res.push(`Bak 0,08 m³ (minigraver): ${bak008.toFixed(1)} vullingen`);
+    res.push(`Bak 0,5 m³ (shovel): ${bak05.toFixed(1)} vullingen`);
+    document.getElementById('result-oppervlakte').innerText = res.join('\n');
+  }
+
+  function berekenBrekerzand() {
+    const opp = parseFloat(document.getElementById('breker-opp').value) || 0;
+    const kg = opp * 3;
+    const m3 = kg / 1500;
+    const krui80 = m3 / 0.08;
+    const krui100 = m3 / 0.10;
+    const res = [];
+    res.push(`Oppervlakte: ${opp.toFixed(2)} m²`);
+    res.push(`Verbruik brekerzand (3 kg/m²): ${kg.toFixed(1)} kg`);
+    res.push(`Volume (los): ${m3.toFixed(3)} m³`);
+    res.push('');
+    res.push(`Kruiwagens (80L): ${krui80.toFixed(1)} stuks`);
+    res.push(`Kruiwagens (100L): ${krui100.toFixed(1)} stuks`);
+    document.getElementById('result-brekerzand').innerText = res.join('\n');
+  }
+
+  function berekenAfschot() {
+    const ref = parseFloat(document.getElementById('afs-ref').value) || 0;
+    const sd = parseFloat(document.getElementById('afs-steen').value) || 0;
+    const zl = parseFloat(document.getElementById('afs-zand').value) || 0;
+    const kl = parseFloat(document.getElementById('afs-korrel').value) || 0;
+    const L = parseFloat(document.getElementById('afs-lengte').value) || 0;
+    const dh = parseFloat(document.getElementById('afs-hoogteverschil').value) || 0;
+    const opbouw = sd + zl + kl;
+    const startBoven = ref;
+    const startOnder = ref - opbouw;
+    const afschotPct = L !== 0 ? (dh / (L * 100)) * 100 : 0;
+    const res = [];
+    res.push(`Referentie: ${ref.toFixed(1)} cm (bijv. dorpel)`);
+    res.push(`Steendikte: ${sd.toFixed(1)} cm, zand: ${zl.toFixed(1)} cm, korrel: ${kl.toFixed(1)} cm`);
+    res.push(`Totale opbouw: ${opbouw.toFixed(1)} cm`);
+    res.push(`Onderkant korrel/cunet bij start: ${startOnder.toFixed(1)} cm`);
+    res.push('');
+    res.push(`Lengte: ${L.toFixed(2)} m, hoogteverschil: ${dh.toFixed(1)} cm`);
+    res.push(`Afschot: ${afschotPct.toFixed(2)} %`);
+    res.push('');
+    res.push('Hoogtes per meter (bovenkant steen t.o.v. referentie):');
+    const stappen = Math.max(1, Math.round(L));
+    for (let i = 0; i <= stappen; i++) {
+      const x = (L / stappen) * i;
+      const h = startBoven + (dh * (x / L || 0));
+      res.push(`- Op ${x.toFixed(2)} m: ${h.toFixed(1)} cm`);
+    }
+    document.getElementById('result-afschot').innerText = res.join('\n');
+  }
+
+  function berekenBandStraal() {
+    const straal = parseFloat(document.getElementById('band-straal').value) || 0;
+    const factor = parseFloat(document.getElementById('band-bocht-type').value) || 1;
+    const bandlen = parseFloat(document.getElementById('band-type').value) || 1;
+    const voeg_cm = parseFloat(document.getElementById('band-voeg-cm').value) || 0;
+    const use50 = document.getElementById('band-50cm').checked;
+    const effBand = bandlen + (voeg_cm / 100);
+    const omtrek = 2 * Math.PI * straal * factor;
+    const hele = effBand > 0 ? Math.floor(omtrek / effBand) : 0;
+    const basisRest = omtrek - hele * effBand;
+    let res = [];
+    res.push(`Bochtomtrek: ${omtrek.toFixed(2)} m`);
+    res.push(`Effectieve bandlengte (incl. voeg): ${effBand.toFixed(3)} m`);
+    res.push(`Hele banden: ${hele} stuks`);
+    res.push(`Zaagstuk zonder 50 cm-regel: ${(basisRest * 100).toFixed(1)} cm`);
+    if (use50) {
+      res.push('');
+      if (basisRest >= 0.5 || hele === 0) {
+        res.push('50 cm-regel: niet nodig (reststuk ≥ 50 cm of geen hele band).');
+      } else {
+        const heleNieuw = hele - 1;
+        const zaag1 = 0.5;
+        const zaag2 = basisRest + (effBand - 0.5);
+        const totaalBands = heleNieuw + 1;
+        res.push('50 cm-regel toegepast:');
+        res.push(`- Hele banden: ${heleNieuw} stuks`);
+        res.push(`- Zaagstuk 1: ${(zaag1 * 100).toFixed(1)} cm`);
+        res.push(`- Zaagstuk 2: ${(zaag2 * 100).toFixed(1)} cm`);
+        res.push(`Totaal te bestellen banden (incl. zaagband): ${totaalBands} stuks`);
+      }
+    }
+    document.getElementById('result-banden-straal').innerText = res.join('\n');
+  }
+
+  function berekenBandLijn() {
+    const L = parseFloat(document.getElementById('band-lengte-lijn').value) || 0;
+    const use50 = document.getElementById('band-lijn-50cm').checked;
+    const bandlen = 1.0;
+    const hele = Math.floor(L / bandlen);
+    const rest = L - hele * bandlen;
+    const res = [];
+    res.push(`Totale lengte: ${L.toFixed(2)} m`);
+    res.push(`Hele banden (1,00 m): ${hele} stuks`);
+    res.push(`Zaagstuk zonder 50 cm-regel: ${(rest * 100).toFixed(1)} cm`);
+    if (use50) {
+      res.push('');
+      if (rest >= 0.5 || hele === 0) {
+        res.push('50 cm-regel: niet nodig (reststuk ≥ 50 cm of geen hele band).');
+      } else {
+        const heleNieuw = hele - 1;
+        const zaag1 = 0.5;
+        const zaag2 = rest + (bandlen - 0.5);
+        const totaalBands = heleNieuw + 1;
+        res.push('50 cm-regel toegepast:');
+        res.push(`- Hele banden: ${heleNieuw} stuks`);
+        res.push(`- Zaagstuk 1: ${(zaag1 * 100).toFixed(1)} cm`);
+        res.push(`- Zaagstuk 2: ${(zaag2 * 100).toFixed(1)} cm`);
+        res.push(`Totaal te bestellen banden (incl. zaagband): ${totaalBands} stuks`);
+      }
+    }
+    document.getElementById('result-banden-lijn').innerText = res.join('\n');
+  }
+
+  function toggleTegelvakDetails() {
+    const cb = document.getElementById('tegelvak-steen-toggle');
+    document.getElementById('tegelvak-details').style.display = cb.checked ? 'block' : 'none';
+  }
+
+  function toggleTegelvakEigenMaat() {
+    const val = document.getElementById('tegelvak-formaat').value;
+    const show = val === 'eigen';
+    document.getElementById('tegelvak-eigen-l').style.display = show ? 'block' : 'none';
+    document.getElementById('tegelvak-eigen-b').style.display = show ? 'block' : 'none';
+  }
+
+  function berekenTegelvak() {
+    const L = parseFloat(document.getElementById('tegelvak-lengte').value) || 0;
+    const B = parseFloat(document.getElementById('tegelvak-breedte').value) || 0;
+    const opp = L * B;
+    const cb = document.getElementById('tegelvak-steen-toggle').checked;
+    const res = [];
+    res.push(`Oppervlakte vak: ${opp.toFixed(2)} m²`);
+    if (!cb || opp <= 0) {
+      document.getElementById('result-tegelvak').innerText = res.join('\n');
+      return;
+    }
+    const formaat = document.getElementById('tegelvak-formaat').value;
+    let tl_cm = 0, tb_cm = 0;
+    if (formaat === '60x60') { tl_cm = 60; tb_cm = 60; }
+    else if (formaat === '80x80') { tl_cm = 80; tb_cm = 80; }
+    else if (formaat === '100x100') { tl_cm = 100; tb_cm = 100; }
+    else {
+      tl_cm = parseFloat(document.getElementById('tegelvak-lengte-cm').value) || 0;
+      tb_cm = parseFloat(document.getElementById('tegelvak-breedte-cm').value) || 0;
+    }
+    const voeg_mm = parseFloat(document.getElementById('tegelvak-voeg-mm').value) || 0;
+    const snij = parseFloat(document.getElementById('tegelvak-snijverlies').value) || 0;
+    const voeg_cm = voeg_mm / 10.0;
+    const moduleL = (tl_cm + voeg_cm) / 100.0;
+    const moduleB = (tb_cm + voeg_cm) / 100.0;
+    const tilesPerM2 = moduleL > 0 && moduleB > 0 ? (1 / (moduleL * moduleB)) : 0;
+    const basis = tilesPerM2 * opp;
+    const totaal = basis * (1 + snij / 100.0);
+    res.push('');
+    res.push(`Formaat: ${tl_cm.toFixed(1)} × ${tb_cm.toFixed(1)} cm`);
+    res.push(`Voegbreedte: ${voeg_mm.toFixed(1)} mm`);
+    res.push(`Modulemaat incl. voeg: ${moduleL.toFixed(3)} m × ${moduleB.toFixed(3)} m`);
+    res.push(`Tegels/stenen per m²: ${tilesPerM2.toFixed(2)} st/m²`);
+    res.push('');
+    res.push(`Benodigde stuks (zonder snijverlies): ${Math.ceil(basis)} st`);
+    res.push(`Benodigde stuks (incl. ${snij.toFixed(1)}% snijverlies): ${Math.ceil(totaal)} st`);
+    document.getElementById('result-tegelvak').innerText = res.join('\n');
+  }
+
+  function toggleModEigenMaat() {
+    const type = document.getElementById('mod-type').value;
+    document.getElementById('mod-eigen-l').style.display = type === 'eigen' ? 'block' : 'none';
+  }
+
+  function berekenModMaat() {
+    const vak = parseFloat(document.getElementById('mod-vak-breedte').value) || 0;
+    const type = document.getElementById('mod-type').value;
+    const voeg_mm = parseFloat(document.getElementById('mod-voeg-mm').value) || 0;
+    let steencm = 0;
+    if (type === 'bkk') steencm = 10.5;
+    else if (type === 'waal') steencm = 20;
+    else if (type === 'tegel60') steencm = 60;
+    else steencm = parseFloat(document.getElementById('mod-lengte-cm').value) || 0;
+    const voeg_cm = voeg_mm / 10.0;
+    const module = (steencm + voeg_cm) / 100.0;
+    const res = [];
+    res.push(`Vakbreedte: ${vak.toFixed(2)} m`);
+    res.push(`Steen/tegelmaat in richting: ${steencm.toFixed(1)} cm`);
+    res.push(`Voegbreedte: ${voeg_mm.toFixed(1)} mm`);
+    res.push(`Module (steen + voeg): ${module.toFixed(3)} m`);
+    if (module > 0 && vak > 0) {
+      const nFloor = Math.floor(vak / module);
+      const nCeil = nFloor + 1;
+      const wFloor = nFloor * module;
+      const wCeil = nCeil * module;
+      const diffFloor = vak - wFloor;
+      const diffCeil = wCeil - vak;
+      res.push('');
+      res.push(`Variant 1: ${nFloor} stenen → maat ${wFloor.toFixed(3)} m (verschil +${diffFloor.toFixed(3)} m ruimte)`);
+      res.push(`Variant 2: ${nCeil} stenen → maat ${wCeil.toFixed(3)} m (verschil -${diffCeil.toFixed(3)} m inspringen)`);
+      const best = Math.abs(diffFloor) <= Math.abs(diffCeil) ? nFloor : nCeil;
+      res.push('');
+      res.push(`Advies: gebruik ongeveer ${best} stenen in de breedte (dichtst bij jouw vakmaat).`);
+    }
+    document.getElementById('result-tegelmaat').innerText = res.join('\n');
+  }
+
+  function berekenLMAqua() {
+    const opp = parseFloat(document.getElementById('lm-opp').value) || 0;
+    const vb = parseFloat(document.getElementById('lm-voeg-mm').value) || 0;
+    const vd = parseFloat(document.getElementById('lm-diepte-mm').value) || 0;
+    const kg = opp * vb * vd * 0.006;
+    const emmers = Math.ceil(kg / 12.5);
+    const res = [];
+    res.push(`Oppervlakte: ${opp.toFixed(2)} m²`);
+    res.push(`Voegbreedte: ${vb.toFixed(1)} mm`);
+    res.push(`Voegdiepte: ${vd.toFixed(1)} mm`);
+    res.push('');
+    res.push(`Benodigde hoeveelheid LM Aqua: ${kg.toFixed(1)} kg`);
+    res.push(`Aantal emmers van 12,5 kg: ${emmers} stuks`);
+    document.getElementById('result-lm-aqua').innerText = res.join('\n');
+  }
+
+  function toggleKnipMateriaal() {
+    const mat = document.getElementById('knip-materiaal').value;
+    document.getElementById('knip-stenen-block').style.display = mat === 'steen' ? 'block' : 'none';
+    document.getElementById('knip-tegels-block').style.display = mat === 'tegel' ? 'block' : 'none';
+  }
+
+  function toggleKnipTegelEigenMaat() {
+    const val = document.getElementById('knip-tegel-formaat').value;
+    const show = val === 'eigen';
+    document.getElementById('knip-tegel-eigen-l').style.display = show ? 'block' : 'none';
+    document.getElementById('knip-tegel-eigen-b').style.display = show ? 'block' : 'none';
+  }
+
+  function berekenKniptool() {
+    const mat = document.getElementById('knip-materiaal').value;
+    const res = [];
+    if (mat === 'steen') {
+      const L = parseFloat(document.getElementById('knip-stenen-lengte').value) || 0;
+      const breed_cm = parseFloat(document.getElementById('knip-stenen-breedte-cm').value) || 0;
+      const len_cm = parseFloat(document.getElementById('knip-stenen-lengte-cm').value) || 0;
+      const dik_cm = parseFloat(document.getElementById('knip-stenen-dikte-cm').value) || 0;
+      const banen = parseFloat(document.getElementById('knip-stenen-banen').value) || 0;
+      const verband = document.getElementById('knip-stenen-verband').value;
+      const bissType = document.getElementById('knip-stenen-bisschop-type').value;
+      const module = breed_cm / 100.0;
+      const stonesPerBaan = module > 0 ? Math.ceil(L / module) : 0;
+      const totalStones = stonesPerBaan * banen;
+      const lagen = Math.ceil(totalStones / 45.0);
+      const volSteen = (len_cm / 100.0) * (breed_cm / 100.0) * (dik_cm / 100.0);
+      const knipStenen = banen;
+      const volKnip = volSteen * knipStenen;
+      const kgKnip = volKnip * 1500;
+      const krui80 = volKnip / 0.08;
+      const krui100 = volKnip / 0.10;
+      const bak008 = volKnip / 0.08;
+      const bak05 = volKnip / 0.5;
+      res.push(`Lengte lijn: ${L.toFixed(2)} m`);
+      res.push(`Steenmaat: ${len_cm.toFixed(1)} × ${breed_cm.toFixed(1)} × ${dik_cm.toFixed(1)} cm`);
+      res.push(`Aantal banen: ${banen}`);
+      res.push('');
+      res.push(`Stenen per baan (kniplijn): ${stonesPerBaan} stuks`);
+      res.push(`Totaal stenen om dicht te knippen: ${totalStones} stuks`);
+      res.push(`Machinale lagen (45 st/laag): ${lagen} lagen`);
+      if (verband === 'keper') {
+        res.push('');
+        res.push(`Keperverband 45° actief.`);
+        if (bissType === 'prefab') {
+          const mutsen = banen * 2;
+          res.push(`Prefab bisschopmutsen nodig: ${mutsen} stuks (2 per baan).`);
+        } else if (bissType === 'gezaagd') {
+          const mutsen = banen * 2;
+          const bkkZaag = banen;
+          res.push(`Bisschopmutsen gezaagd uit BKK: ${mutsen} stuks (2 per baan).`);
+          res.push(`BKK stenen om te zagen: ${bkkZaag} stuks.`);
+        }
+      }
+      res.push('');
+      res.push(`Knipstenen (1 per baan): ${knipStenen} stuks`);
+      res.push(`Knipafval volume: ${volKnip.toFixed(3)} m³ (~${kgKnip.toFixed(1)} kg)`);
+      res.push(`Kruiwagens (80L): ${krui80.toFixed(1)} stuks`);
+      res.push(`Kruiwagens (100L): ${krui100.toFixed(1)} stuks`);
+      res.push(`Bak 0,08 m³: ${bak008.toFixed(1)} vullingen`);
+      res.push(`Bak 0,5 m³: ${bak05.toFixed(1)} vullingen`);
+    } else {
+      const L = parseFloat(document.getElementById('knip-tegel-lengte').value) || 0;
+      const banen = parseFloat(document.getElementById('knip-tegel-banen').value) || 0;
+      const formaat = document.getElementById('knip-tegel-formaat').value;
+      let tl_cm = 0, tb_cm = 0;
+      if (formaat === '60x60') { tl_cm = 60; tb_cm = 60; }
+      else if (formaat === '80x80') { tl_cm = 80; tb_cm = 80; }
+      else {
+        tl_cm = parseFloat(document.getElementById('knip-tegel-lengte-cm').value) || 0;
+        tb_cm = parseFloat(document.getElementById('knip-tegel-breedte-cm').value) || 0;
+      }
+      const voeg_mm = parseFloat(document.getElementById('knip-tegel-voeg-mm').value) || 0;
+      const dik_cm = parseFloat(document.getElementById('knip-tegel-dikte-cm').value) || 0;
+      const voeg_cm = voeg_mm / 10.0;
+      const module = (tl_cm + voeg_cm) / 100.0;
+      const tegelsPerBaan = module > 0 ? Math.ceil(L / module) : 0;
+      const rest = L - (tegelsPerBaan - 1) * module;
+      const knipTegels = banen;
+      const volTegel = (tl_cm / 100.0) * (tb_cm / 100.0) * (dik_cm / 100.0);
+      const volKnip = volTegel * knipTegels;
+      const kgKnip = volKnip * 1500;
+      const krui80 = volKnip / 0.08;
+      const krui100 = volKnip / 0.10;
+      const bak008 = volKnip / 0.08;
+      const bak05 = volKnip / 0.5;
+      res.push(`Lengte lijn: ${L.toFixed(2)} m`);
+      res.push(`Aantal banen: ${banen}`);
+      res.push(`Tegelmaat: ${tl_cm.toFixed(1)} × ${tb_cm.toFixed(1)} cm`);
+      res.push(`Voegbreedte: ${voeg_mm.toFixed(1)} mm`);
+      res.push('');
+      res.push(`Tegels per baan: ${tegelsPerBaan} stuks`);
+      res.push(`Restmaat per baan: ${(rest * 100).toFixed(1)} cm`);
+      res.push(`Kniptegels (1 per baan): ${knipTegels} stuks`);
+      res.push('');
+      res.push(`Knipafval volume: ${volKnip.toFixed(3)} m³ (~${kgKnip.toFixed(1)} kg)`);
+      res.push(`Kruiwagens (80L): ${krui80.toFixed(1)} stuks`);
+      res.push(`Kruiwagens (100L): ${krui100.toFixed(1)} stuks`);
+      res.push(`Bak 0,08 m³: ${bak008.toFixed(1)} vullingen`);
+      res.push(`Bak 0,5 m³: ${bak05.toFixed(1)} vullingen`);
+    }
+    document.getElementById('result-knip').innerText = res.join('\n');
+  }
+
+  function toggleStenenEigenMaat() {
+    const type = document.getElementById('stenen-type').value;
+    const show = type === 'eigen';
+    document.getElementById('stenen-eigen-l').style.display = show ? 'block' : 'none';
+    document.getElementById('stenen-eigen-b').style.display = show ? 'block' : 'none';
+    document.getElementById('stenen-eigen-d').style.display = show ? 'block' : 'none';
+  }
+
+  function berekenStenenTool() {
+    let type = document.getElementById('stenen-type').value;
+    let len_cm, br_cm, dik_cm;
+    if (type === 'bkk') { len_cm = 21; br_cm = 10.5; dik_cm = 8; }
+    else if (type === 'waal') { len_cm = 20; br_cm = 5; dik_cm = 7; }
+    else if (type === 'dik') { len_cm = 21; br_cm = 7; dik_cm = 7; }
+    else {
+      len_cm = parseFloat(document.getElementById('stenen-lengte-cm').value) || 0;
+      br_cm = parseFloat(document.getElementById('stenen-breedte-cm').value) || 0;
+      dik_cm = parseFloat(document.getElementById('stenen-dikte-cm').value) || 0;
+    }
+    const verband = document.getElementById('stenen-verband').value;
+    const voeg_mm = parseFloat(document.getElementById('stenen-voeg-mm').value) || 0;
+    const L_vak = parseFloat(document.getElementById('stenen-vak-l').value) || 0;
+    const B_vak = parseFloat(document.getElementById('stenen-vak-b').value) || 0;
+    const banen = parseFloat(document.getElementById('stenen-banen').value) || 0;
+    let effLen_cm = len_cm, effBr_cm = br_cm;
+    if (verband === 'keper') {
+      const c = Math.SQRT1_2;
+      effLen_cm = len_cm * c;
+      effBr_cm = br_cm * c;
+    }
+    const voeg_cm = voeg_mm / 10.0;
+    const moduleL = (effLen_cm + voeg_cm) / 100.0;
+    const moduleB = (effBr_cm + voeg_cm) / 100.0;
+    const stenenPerM2 = moduleL > 0 && moduleB > 0 ? 1 / (moduleL * moduleB) : 0;
+    const opp = L_vak * B_vak;
+    const totaalStenen = stenenPerM2 * opp;
+    let lagen = 0, pakken = 0;
+    if (type === 'bkk') {
+      lagen = Math.ceil(totaalStenen / 45.0);
+      pakken = Math.ceil(lagen / 10.0);
+    }
+    const res = [];
+    res.push(`Steensoort: ${type.toUpperCase()}`);
+    res.push(`Verband: ${verband}`);
+    res.push(`Steenmaat: ${len_cm.toFixed(1)} × ${br_cm.toFixed(1)} × ${dik_cm.toFixed(1)} cm`);
+    res.push(`Effectieve maat voor berekening: ${effLen_cm.toFixed(1)} × ${effBr_cm.toFixed(1)} cm`);
+    res.push(`Voegbreedte: ${voeg_mm.toFixed(1)} mm`);
+    res.push('');
+    res.push(`Modulemaat: ${moduleL.toFixed(3)} m × ${moduleB.toFixed(3)} m`);
+    res.push(`Stenen per m²: ${stenenPerM2.toFixed(2)} st/m²`);
+    res.push('');
+    res.push(`Vak: ${L_vak.toFixed(2)} m × ${B_vak.toFixed(2)} m = ${opp.toFixed(2)} m²`);
+    res.push(`Totaal aantal stenen: ${Math.ceil(totaalStenen)} stuks`);
+    if (type === 'bkk') {
+      res.push(`Machinale lagen (45 st/laag): ${lagen} lagen`);
+      res.push(`Machinale pakken (10 lagen/pak): ${pakken} pakken`);
+    }
+    if (verband === 'keper' && banen > 0) {
+      const mutsen = banen * 2;
+      res.push('');
+      res.push(`Keperverband 45°: banen = ${banen}`);
+      res.push(`Indicatie bisschopmutsen (2 per baan): ${mutsen} stuks (prefab/gezaagd via kniptool).`);
+    }
+    document.getElementById('result-stenen').innerText = res.join('\n');
+  }
+
+  function berekenPVC() {
+    const dia = document.getElementById('pvc-dia').value;
+    const n1 = parseFloat(document.getElementById('pvc-1m').value) || 0;
+    const n3 = parseFloat(document.getElementById('pvc-3m').value) || 0;
+    const n5 = parseFloat(document.getElementById('pvc-5m').value) || 0;
+    const rest = parseFloat(document.getElementById('pvc-rest').value) || 0;
+    const meter = n1 * 1 + n3 * 3 + n5 * 5 + rest;
+    const f = id => parseFloat(document.getElementById(id).value) || 0;
+    const res = [];
+    res.push(`Diameter: ${dia} mm`);
+    res.push(`Totale lengte buis: ${meter.toFixed(2)} m`);
+    res.push('');
+    res.push(`1 m: ${n1} stuks`);
+    res.push(`3 m: ${n3} stuks`);
+    res.push(`5 m: ${n5} stuks`);
+    res.push(`Restlengte: ${rest.toFixed(2)} m`);
+    res.push('');
+    res.push('Koppelingen:');
+    res.push(`- Schuifmof: ${f('pvc-schuifmof')} st`);
+    res.push(`- Steekmof: ${f('pvc-steekmof')} st`);
+    res.push(`- Bocht 15°: ${f('pvc-bocht15')} st`);
+    res.push(`- Bocht 30°: ${f('pvc-bocht30')} st`);
+    res.push(`- Bocht 45°: ${f('pvc-bocht45')} st`);
+    res.push(`- Bocht 90°: ${f('pvc-bocht90')} st`);
+    res.push(`- T-stuk: ${f('pvc-tstuk')} st`);
+    res.push(`- Y-stuk: ${f('pvc-ystuk')} st`);
+    res.push(`- Ontstoppingsstuk: ${f('pvc-onst')} st`);
+    document.getElementById('result-pvc').innerText = res.join('\n');
+  }
+
+  function berekenSchutting() {
+    const L = parseFloat(document.getElementById('schut-lengte').value) || 0;
+    const paneel = parseFloat(document.getElementById('schut-paneel').value) || 0;
+    const paalB = parseFloat(document.getElementById('schut-paalbreedte').value) || 0;
+    const poorten = parseFloat(document.getElementById('schut-poorten').value) || 0;
+    const poortB = parseFloat(document.getElementById('schut-poortbreedte').value) || 0;
+    const hoek = parseFloat(document.getElementById('schut-hoek').value) || 0;
+    const eind = parseFloat(document.getElementById('schut-eind').value) || 0;
+    const lengtePoorten = poorten * poortB;
+    const rest = Math.max(0, L - lengtePoorten);
+    const bay = paneel + paalB;
+    const panels = bay > 0 ? Math.floor((rest + paalB) / bay) : 0;
+    const palenTussen = panels + 1;
+    const poortPalen = poorten * 2;
+    const extraPalen = hoek + eind;
+    const totaalPalen = palenTussen + poortPalen + extraPalen;
+    const onderplaten = panels;
+    const zakjes = totaalPalen;
+    const gebruikteLengtePanelen = panels * paneel + palenTussen * paalB;
+    const totaleGebruikteLengte = gebruikteLengtePanelen + lengtePoorten;
+    const restLengte = L - totaleGebruikteLengte;
+    const res = [];
+    res.push(`Totale schuttinglengte: ${L.toFixed(2)} m`);
+    res.push(`Paneellengte: ${paneel.toFixed(2)} m, paalbreedte: ${paalB.toFixed(2)} m`);
+    res.push(`Poorten: ${poorten} stuks, breedte per poort: ${poortB.toFixed(2)} m`);
+    res.push(`Hoekpalen extra: ${hoek}, eindpalen extra: ${eind}`);
+    res.push('');
+    res.push(`Beschikbare lengte voor panelen (zonder poorten): ${rest.toFixed(2)} m`);
+    res.push(`Panelen passend: ${panels} stuks`);
+    res.push('');
+    res.push(`Tussenpalen (bij panelen): ${palenTussen} stuks`);
+    res.push(`Poortpalen: ${poortPalen} stuks`);
+    res.push(`Extra hoek/eindpalen: ${extraPalen} stuks`);
+    res.push(`Totaal palen: ${totaalPalen} stuks`);
+    res.push('');
+    res.push(`Onderplaten: ${onderplaten} stuks (1 per paneel)`);
+    res.push(`Verbindingszakjes: ${zakjes} stuks (1 zakje per paal)`);
+    res.push('');
+    res.push(`Gebruikte lengte (panelen + palen + poorten): ${totaleGebruikteLengte.toFixed(2)} m`);
+    res.push(`Restlengte verschil: ${restLengte.toFixed(2)} m`);
+    document.getElementById('result-schutting').innerText = res.join('\n');
+  }
+
+  // ========================================================
+  // PROJECTEN-SYSTEEM
+  // ========================================================
+  const PROJ_STORE_KEY = 'stratenmaker_projects_v1';
+  let projData = {};
+  let projCurrentId = null;
+
+  function projEnsureExtras(p) {
+    if (!p) return p;
+    if (!Array.isArray(p.materials)) p.materials = [];
+    if (!Array.isArray(p.toolSnippets)) p.toolSnippets = [];
+    return p;
+  }
+
+  function projOnOpen() {
+    projRefreshSelect();
+    if (projCurrentId && projData[projCurrentId]) {
+      document.getElementById("proj-status").innerText =
+        `Project "${projData[projCurrentId].name}" actief.`;
+      projRenderSnippets();
+    }
+  }
+
+  function projLoadFromStorage() {
+    try {
+      const raw = localStorage.getItem(PROJ_STORE_KEY);
+      projData = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      projData = {};
+    }
+    projRefreshSelect();
+  }
+
+  function projSaveToStorage() {
+    try {
+      localStorage.setItem(PROJ_STORE_KEY, JSON.stringify(projData));
+    } catch (e) {
+      console.error("Kan projecten niet opslaan", e);
+    }
+  }
+
+  function projRefreshSelect() {
+    const sel = document.getElementById("proj-select");
+    if (!sel) return;
+
+    sel.innerHTML = '<option value="">– Kies een project –</option>';
+    const ids = Object.keys(projData).sort((a, b) =>
+      (projData[a].name || "").localeCompare(projData[b].name || "")
+    );
+
+    ids.forEach(id => {
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = projData[id].name || "(zonder naam)";
+      sel.appendChild(opt);
+    });
+
+    if (projCurrentId && projData[projCurrentId]) {
+      sel.value = projCurrentId;
+    }
+  }
+
+  function projSelectChanged() {
+    const sel = document.getElementById("proj-select");
+    const id = sel.value;
+
+    if (!id || !projData[id]) {
+      projCurrentId = null;
+      document.getElementById("proj-name").value = "";
+      document.getElementById("proj-notes").value = "";
+      document.getElementById("proj-status").innerText =
+        "Geen project geselecteerd. Maak een nieuw project of kies er één uit de lijst.";
+      document.getElementById("proj-snippets").innerText =
+        "Nog geen onderdelen gekoppeld aan dit project.";
+      if (typeof matLoadForProject === 'function') matLoadForProject();
+      return;
+    }
+
+    projCurrentId = id;
+    const p = projEnsureExtras(projData[id]);
+
+    document.getElementById("proj-name").value = p.name || "";
+    document.getElementById("proj-notes").value = p.notes || "";
+    document.getElementById("proj-status").innerText =
+      `Project "${p.name}" geladen. Laatst bijgewerkt: ${p.updated || p.created}`;
+    projRenderSnippets();
+    if (typeof matLoadForProject === 'function') matLoadForProject();
+  }
+
+  function projNew() {
+    projCurrentId = null;
+    document.getElementById("proj-select").value = "";
+    document.getElementById("proj-name").value = "";
+    document.getElementById("proj-notes").value = "";
+    document.getElementById("proj-status").innerText =
+      "Nieuw leeg project. Vul gegevens in en klik op Opslaan.";
+    document.getElementById("proj-snippets").innerText =
+      "Nog geen onderdelen gekoppeld aan dit project.";
+    if (typeof matLoadForProject === 'function') matLoadForProject();
+  }
+
+  function projSave() {
+    const name = (document.getElementById("proj-name").value || "").trim();
+    const notes = document.getElementById("proj-notes").value || "";
+
+    if (!name) {
+      alert("Geef eerst een projectnaam in.");
+      return;
+    }
+
+    const now = new Date().toLocaleString();
+
+    if (!projCurrentId) {
+      projCurrentId = "proj_" + Date.now() + "_" + Math.floor(Math.random() * 9999);
+    }
+
+    const existing = projEnsureExtras(projData[projCurrentId] || {});
+
+    projData[projCurrentId] = {
+      ...existing,
+      id: projCurrentId,
+      name,
+      notes,
+      created: existing.created || now,
+      updated: now,
+      materials: existing.materials || [],
+      toolSnippets: existing.toolSnippets || []
+    };
+
+    projSaveToStorage();
+    projRefreshSelect();
+
+    document.getElementById("proj-status").innerText =
+      `Project "${name}" opgeslagen op ${now}.`;
+
+    if (typeof matSaveForProject === 'function') {
+      matSaveForProject(false); // geen extra alert
+    }
+  }
+
+  function projDelete() {
+    if (!projCurrentId || !projData[projCurrentId]) {
+      alert("Geen project geselecteerd.");
+      return;
+    }
+
+    const naam = projData[projCurrentId].name || "(zonder naam)";
+    if (!confirm(`Weet je zeker dat je project "${naam}" wilt verwijderen?`)) return;
+
+    delete projData[projCurrentId];
+    projSaveToStorage();
+
+    projCurrentId = null;
+    document.getElementById("proj-select").value = "";
+    document.getElementById("proj-name").value = "";
+    document.getElementById("proj-notes").value = "";
+
+    projRefreshSelect();
+
+    document.getElementById("proj-status").innerText =
+      `Project "${naam}" is verwijderd.`;
+    document.getElementById("proj-snippets").innerText =
+      "Nog geen onderdelen gekoppeld aan dit project.";
+    if (typeof matLoadForProject === 'function') matLoadForProject();
+  }
+
+  function projRenderSnippets() {
+    const box = document.getElementById("proj-snippets");
+    if (!box) return;
+    if (!projCurrentId || !projData[projCurrentId]) {
+      box.innerText = "Nog geen onderdelen gekoppeld aan dit project.";
+      return;
+    }
+    const p = projEnsureExtras(projData[projCurrentId]);
+    if (!p.toolSnippets.length) {
+      box.innerText = "Nog geen onderdelen gekoppeld aan dit project.";
+      return;
+    }
+    const lines = [];
+    p.toolSnippets.forEach((s, idx) => {
+      lines.push(`Onderdeel ${idx + 1}: ${s.label || '(zonder omschrijving)'}`);
+      lines.push("------------------------------------------");
+      lines.push(s.text.trim());
+      lines.push("");
+    });
+    box.innerText = lines.join("\n");
+  }
+
+  function projBuildTextExport() {
+    const name = (document.getElementById("proj-name").value || "").trim() || "(zonder naam)";
+    const notes = document.getElementById("proj-notes").value || "";
+    const p = projCurrentId && projData[projCurrentId] ? projEnsureExtras(projData[projCurrentId]) : null;
+
+    let txt = "";
+    txt += `Project: ${name}\n`;
+    txt += "=====================================\n\n";
+    if (notes) {
+      txt += "Notities / omschrijving:\n";
+      txt += notes + "\n\n";
+    }
+
+    if (p && p.toolSnippets && p.toolSnippets.length) {
+      txt += "Onderdelen uit tools:\n";
+      txt += "-------------------------------------\n\n";
+      p.toolSnippets.forEach((s, idx) => {
+        txt += `Onderdeel ${idx + 1}: ${s.label || '(zonder omschrijving)'}\n`;
+        txt += s.text.trim() + "\n\n";
+      });
+    }
+
+    if (p && p.materials && p.materials.length) {
+      txt += "Materialen & prijzen (samenvatting):\n";
+      txt += "-------------------------------------\n";
+      const { summaryLines } = matBuildSummaryFromProject(p);
+      txt += summaryLines.join("\n") + "\n";
+    }
+
+    return { name, txt };
+  }
+
+  function projDownloadTxt() {
+    const { name, txt } = projBuildTextExport();
+    const blob = new Blob([txt], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (name || 'project') + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function projCopyTxt() {
+    const { txt } = projBuildTextExport();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(() => {
+        alert('Projecttekst gekopieerd naar klembord.');
+      }).catch(() => {
+        alert('Kon niet kopiëren. Selecteer en kopieer de tekst handmatig.');
+      });
+    } else {
+      alert('Selecteer en kopieer de tekst handmatig.');
+    }
+  }
+
+  // ========================================================
+  // MATERIALENLIJST
+  // ========================================================
+  function matOnOpen() {
+    matLoadForProject();
+  }
+
+  function matSetCurrentProjectLabel() {
+    const span = document.getElementById("mat-current-project");
+    if (!span) return;
+    if (!projCurrentId || !projData[projCurrentId]) {
+      span.innerText = "geen project geselecteerd";
+    } else {
+      span.innerText = projData[projCurrentId].name || "(zonder naam)";
+    }
+  }
+
+  function matClearRows() {
+    const container = document.getElementById("mat-rows");
+    if (!container) return;
+    container.innerHTML = "Nog geen materialen toegevoegd. Klik op “Nieuwe regel”.";
+    matRecalcTotals();
+  }
+
+  function matAddRow(data) {
+    const container = document.getElementById("mat-rows");
+    if (!container) return;
+
+    if (!container.querySelector('.mat-row')) {
+      container.innerHTML = "";
+    }
+
+    data = data || {};
+    const cat = data.category || "Overig";
+    const desc = data.description || "";
+    const unit = data.unit || "st";
+    const qty = data.qty != null ? data.qty : "";
+    const inkoop = data.inkoop != null ? data.inkoop : "";
+    const marge = data.marge != null ? data.marge : 15;
+    const btw = data.btw != null ? data.btw : 21;
+
+    const row = document.createElement("div");
+    row.className = "mat-row";
+    row.style.marginBottom = "0.5rem";
+
+    row.innerHTML = `
+      <div class="grid">
+        <div class="field">
+          <label>Categorie</label>
+          <select class="mat-cat">
+            <option ${cat === 'Grond/zand' ? 'selected' : ''}>Grond/zand</option>
+            <option ${cat === 'Banden' ? 'selected' : ''}>Banden</option>
+            <option ${cat === 'Tegels' ? 'selected' : ''}>Tegels</option>
+            <option ${cat === 'Stenen' ? 'selected' : ''}>Stenen</option>
+            <option ${cat === 'PVC' ? 'selected' : ''}>PVC</option>
+            <option ${cat === 'Schutting' ? 'selected' : ''}>Schutting</option>
+            <option ${cat === 'Arbeid' ? 'selected' : ''}>Arbeid</option>
+            <option ${cat === 'Overig' ? 'selected' : ''}>Overig</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Omschrijving</label>
+          <input type="text" class="mat-desc" value="${desc}" placeholder="Bijv. BKK oprit 45 m²" />
+        </div>
+        <div class="field">
+          <label>Eenheid</label>
+          <select class="mat-unit">
+            <option value="m²" ${unit === 'm²' ? 'selected' : ''}>m²</option>
+            <option value="m¹" ${unit === 'm¹' ? 'selected' : ''}>m¹</option>
+            <option value="m³" ${unit === 'm³' ? 'selected' : ''}>m³</option>
+            <option value="st" ${unit === 'st' ? 'selected' : ''}>st</option>
+            <option value="uur" ${unit === 'uur' ? 'selected' : ''}>uur</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Aantal</label>
+          <input type="number" step="0.01" class="mat-qty" value="${qty}" />
+        </div>
+        <div class="field">
+          <label>Inkoop per eenheid (€)</label>
+          <input type="number" step="0.01" class="mat-inkoop" value="${inkoop}" />
+        </div>
+        <div class="field">
+          <label>Marge (%)</label>
+          <input type="number" step="0.1" class="mat-marge" value="${marge}" />
+        </div>
+        <div class="field">
+          <label>BTW (%)</label>
+          <input type="number" step="1" class="mat-btw" value="${btw}" />
+        </div>
+      </div>
+      <div class="grid" style="margin-top:0.35rem;">
+        <div class="field">
+          <label>Verkoop per eenheid (€)</label>
+          <div class="mat-verkoop-per subtle">0,00</div>
+        </div>
+        <div class="field">
+          <label>Totaal ex. btw (€)</label>
+          <div class="mat-sum-ex subtle">0,00</div>
+        </div>
+        <div class="field">
+          <label>BTW bedrag (€)</label>
+          <div class="mat-sum-btw subtle">0,00</div>
+        </div>
+        <div class="field">
+          <label>Totaal incl. btw (€)</label>
+          <div class="mat-sum-inc subtle">0,00</div>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="btn btn-outline" type="button">❌ Verwijder</button>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(row);
+
+    const inputs = row.querySelectorAll('input,select');
+    inputs.forEach(inp => {
+      inp.addEventListener('input', matRecalcTotals);
+      inp.addEventListener('change', matRecalcTotals);
+    });
+    const delBtn = row.querySelector('button');
+    delBtn.addEventListener('click', () => {
+      row.remove();
+      matRecalcTotals();
+    });
+
+    matRecalcTotals();
+  }
+
+  function matRecalcTotals() {
+    const container = document.getElementById("mat-rows");
+    if (!container) return;
+
+    const rows = container.querySelectorAll('.mat-row');
+    let totalEx = 0;
+    let totalBtw = 0;
+    let totalInc = 0;
+
+    rows.forEach(row => {
+      const qty = parseFloat(row.querySelector('.mat-qty').value) || 0;
+      const inkoop = parseFloat(row.querySelector('.mat-inkoop').value) || 0;
+      const marge = parseFloat(row.querySelector('.mat-marge').value) || 0;
+      const btw = parseFloat(row.querySelector('.mat-btw').value) || 0;
+
+      const verkoopPer = inkoop * (1 + marge / 100);
+      const sumEx = verkoopPer * qty;
+      const sumBtw = sumEx * (btw / 100);
+      const sumInc = sumEx + sumBtw;
+
+      totalEx += sumEx;
+      totalBtw += sumBtw;
+      totalInc += sumInc;
+
+      const f = v => v.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      row.querySelector('.mat-verkoop-per').innerText = f(isFinite(verkoopPer) ? verkoopPer : 0);
+      row.querySelector('.mat-sum-ex').innerText = f(isFinite(sumEx) ? sumEx : 0);
+      row.querySelector('.mat-sum-btw').innerText = f(isFinite(sumBtw) ? sumBtw : 0);
+      row.querySelector('.mat-sum-inc').innerText = f(isFinite(sumInc) ? sumInc : 0);
+    });
+
+    const f = v => v.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const exSpan = document.getElementById('mat-total-ex');
+    const btwSpan = document.getElementById('mat-total-btw');
+    const incSpan = document.getElementById('mat-total-inc');
+    if (exSpan) exSpan.innerText = f(totalEx);
+    if (btwSpan) btwSpan.innerText = f(totalBtw);
+    if (incSpan) incSpan.innerText = f(totalInc);
+  }
+
+  function matReadRowsToData() {
+    const container = document.getElementById("mat-rows");
+    if (!container) return [];
+    const rows = container.querySelectorAll('.mat-row');
+    const out = [];
+    rows.forEach(row => {
+      const cat = row.querySelector('.mat-cat').value || '';
+      const desc = row.querySelector('.mat-desc').value || '';
+      const unit = row.querySelector('.mat-unit').value || '';
+      const qty = parseFloat(row.querySelector('.mat-qty').value) || 0;
+      const inkoop = parseFloat(row.querySelector('.mat-inkoop').value) || 0;
+      const marge = parseFloat(row.querySelector('.mat-marge').value) || 0;
+      const btw = parseFloat(row.querySelector('.mat-btw').value) || 0;
+      out.push({ category: cat, description: desc, unit, qty, inkoop, marge, btw });
+    });
+    return out;
+  }
+
+  function matLoadDataToRows(items) {
+    matClearRows();
+    const container = document.getElementById("mat-rows");
+    if (!container) return;
+
+    if (!items || !items.length) {
+      container.innerHTML = "Nog geen materialen toegevoegd. Klik op “Nieuwe regel”.";
+      matRecalcTotals();
+      return;
+    }
+
+    container.innerHTML = "";
+    items.forEach(it => matAddRow(it));
+  }
+
+  function matLoadForProject() {
+    matSetCurrentProjectLabel();
+    if (!projCurrentId || !projData[projCurrentId]) {
+      matClearRows();
+      return;
+    }
+    const p = projEnsureExtras(projData[projCurrentId]);
+    matLoadDataToRows(p.materials || []);
+  }
+
+  function matSaveForProject(showAlert = true) {
+    if (!projCurrentId || !projData[projCurrentId]) {
+      if (showAlert) {
+        alert('Geen project geselecteerd.\nGa eerst naar "Projecten", maak of kies een project en sla deze op.');
+      }
+      return;
+    }
+    const items = matReadRowsToData();
+    const p = projEnsureExtras(projData[projCurrentId]);
+    p.materials = items;
+    projData[projCurrentId] = p;
+    projSaveToStorage();
+    if (showAlert) {
+      alert('Materialenlijst opgeslagen bij project "' + (p.name || '') + '".');
+    }
+  }
+
+  function matBuildSummaryFromProject(p) {
+    p = projEnsureExtras(p);
+    const items = p.materials || [];
+    const summaryLines = [];
+    let totalEx = 0, totalBtw = 0, totalInc = 0;
+    const f = v => v.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    items.forEach(it => {
+      const verkoopPer = it.inkoop * (1 + (it.marge || 0) / 100);
+      const sumEx = verkoopPer * (it.qty || 0);
+      const sumBtw = sumEx * ((it.btw || 0) / 100);
+      const sumInc = sumEx + sumBtw;
+      totalEx += sumEx;
+      totalBtw += sumBtw;
+      totalInc += sumInc;
+
+      summaryLines.push(
+        `- ${it.category} | ${it.description} | ${it.qty} ${it.unit} | €${f(verkoopPer)}/eenh. | €${f(sumInc)} incl. btw`
+      );
+    });
+
+    summaryLines.push("");
+    summaryLines.push(`Subtotaal ex. btw: €${f(totalEx)}`);
+    summaryLines.push(`Totaal btw: €${f(totalBtw)}`);
+    summaryLines.push(`Totaal incl. btw: €${f(totalInc)}`);
+
+    return { summaryLines, totalEx, totalBtw, totalInc };
+  }
+
+  function matCopySummary() {
+    if (!projCurrentId || !projData[projCurrentId]) {
+      alert('Geen project geselecteerd. Materialenlijst hoort bij een project.');
+      return;
+    }
+    const p = projEnsureExtras(projData[projCurrentId]);
+    const { summaryLines } = matBuildSummaryFromProject(p);
+    const txt = summaryLines.join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(() => {
+        alert('Samenvatting van materialenlijst gekopieerd naar klembord.');
+      }).catch(() => {
+        alert('Kon niet kopiëren. Selecteer en kopieer de tekst handmatig.');
+      });
+    } else {
+      alert('Selecteer en kopieer de tekst handmatig.');
+    }
+  }
+
+  // ========================================================
+  // INIT BIJ LADEN PAGINA
+  // ========================================================
+  projLoadFromStorage();
+  matSetCurrentProjectLabel();
+
+  function berekenElleboogRand() {
+    const omtrek = parseFloat(document.getElementById("elleboog-omtrek").value) || 0;
+    const steenLengteCm = parseFloat(document.getElementById("elleboog-type").value);
+    const steenLengteM = steenLengteCm / 100;
+    const totaalStenen = Math.floor(omtrek / steenLengteM);
+    const halveStenen = Math.floor(totaalStenen / 3);
+
+    const res = [];
+    res.push(`Omtrek: ${omtrek.toFixed(2)} meter`);
+    res.push(`Steenlengte: ${steenLengteCm} cm`);
+    res.push(`Totale stenen in rand: ${totaalStenen} stuks`);
+    res.push('');
+    res.push(`Halve stenen nodig (elleboogverband): ${halveStenen} stuks`);
+
+    document.getElementById("result-elleboog").innerText = res.join('\n');
+  }
+</script>
+
+<!-- SERVICE WORKER REGISTRATIE -->
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("service-worker.js")
+        .then(reg => console.log("SW geregistreerd:", reg.scope))
+        .catch(err => console.log("SW fout:", err));
+    });
+  }
+</script>
+
+</body>
+</html>

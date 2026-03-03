@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Offertetool Dennis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {font-family: system-ui, sans-serif; margin: 0; padding: 0; background:#f5f5f5;}
+    header {background:#111827; color:#fff; padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;}
+    header h1 {font-size:1.2rem; margin:0;}
+    main {padding:1rem; max-width:1100px; margin:0 auto;}
+    .toolbar {display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1rem; align-items:center;}
+    select, input[type="text"], input[type="number"] {
+      padding:.4rem .5rem; border-radius:.4rem; border:1px solid #d1d5db; font-size:.9rem;
+    }
+    table {width:100%; border-collapse:collapse; background:#fff; border-radius:.75rem; overflow:hidden;}
+    th, td {padding:.35rem .5rem; font-size:.8rem; border-bottom:1px solid #e5e7eb;}
+    th {background:#e5e7eb; text-align:left;}
+    tr:nth-child(even) td {background:#f9fafb;}
+    tr.item-row:hover td {background:#e0f2fe;}
+    .right {text-align:right;}
+    .totals {margin-top:1rem; max-width:390px; margin-left:auto;}
+    .totals-row {display:flex; justify-content:space-between; padding:.25rem 0; font-size:.9rem;}
+    .totals-row.total {font-weight:700; border-top:1px solid #d1d5db; margin-top:.25rem; padding-top:.4rem;}
+    .chip {display:inline-flex; align-items:center; gap:.3rem; padding:.2rem .5rem; border-radius:999px; font-size:.75rem; border:1px solid #d1d5db; background:#fff;}
+    button {
+      border:none; border-radius:.5rem; padding:.4rem .8rem; font-size:.8rem; cursor:pointer;
+      background:#111827; color:#fff; display:inline-flex; align-items:center; gap:.25rem;
+    }
+    button.secondary {background:#e5e7eb; color:#111827;}
+    button:active {transform:translateY(1px);}
+    .pill-toggle {display:inline-flex; border-radius:999px; border:1px solid #d1d5db; overflow:hidden;}
+    .pill-toggle button {border-radius:0; background:transparent; color:#4b5563; padding:.25rem .75rem;}
+    .pill-toggle button.active {background:#111827; color:#fff;}
+
+    .offerte-box {
+      margin-top:1.5rem;
+      background:#fff;
+      border-radius:.75rem;
+      padding:.75rem;
+      border:1px solid #e5e7eb;
+    }
+    .offerte-box h2 {font-size:.95rem; margin-top:0; margin-bottom:.5rem;}
+    .offerte-header-inputs {display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.5rem; font-size:.8rem;}
+    .offerte-header-inputs input, .offerte-header-inputs select {flex:1 1 180px; min-width:0;}
+
+    textarea {
+      display:block; width:100%; min-height:180px; border-radius:.5rem; border:1px solid #d1d5db;
+      padding:.5rem; font-family:system-ui, sans-serif; font-size:.8rem; resize:vertical; background:#f9fafb; margin-top:.5rem;
+    }
+
+    .muted { color:#6b7280; font-size:.75rem; }
+
+    @media (max-width:700px) {
+      th:nth-child(3), td:nth-child(3) {display:none;}
+      .totals {max-width:100%; margin-left:0;}
+      .pill-toggle {flex-wrap:wrap}
+      .pill-toggle button {padding:.35rem .7rem;}
+    }
+
+    @media print {
+      body { background:#fff; }
+      .toolbar, .pill-toggle, button, .offerte-header-inputs, #projectsRow, #hintRow { display:none !important; }
+      main { max-width:100%; padding:0.5rem; }
+      table { font-size:0.75rem; }
+      .offerte-box textarea { min-height:300px; border:none; background:#fff; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div style="display:flex; align-items:center; gap:.75rem;">
+    <h1>Offertetool Dennis</h1>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <div class="pill-toggle">
+      <button type="button" class="active" id="allBtn">Alle</button>
+      <button type="button" id="straatwerkBtn">Straatwerk</button>
+      <button type="button" id="grondwerkBtn">Grondwerk</button>
+      <button type="button" id="containersBtn">Containers</button>
+      <button type="button" id="verhuurBtn">Verhuur</button>
+      <button type="button" id="pvcBtn">PVC</button>
+      <button type="button" id="overigBtn">Overig</button>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="Zoeken op werkzaamheid..." style="flex:1 1 140px; min-width:0;" />
+
+    <label class="chip">
+      <input type="checkbox" id="voorrijToggle" style="margin-right:.25rem;" />
+      Voorrijkosten €65
+    </label>
+
+<div class="chip" style="gap:.5rem; flex:1 1 520px; justify-content:flex-start;">
+  <span style="font-weight:600;">Eigen regel (Overig):</span>
+  <input type="text" id="customOverigText" placeholder="Eigen tekst..." style="flex:1 1 220px; min-width:160px;" />
+  <input type="number" id="customOverigPrice" placeholder="Prijs excl." step="0.01" min="0" style="width:120px;" />
+  <input type="number" id="customOverigQty" placeholder="Aantal" step="0.01" min="0" style="width:90px;" />
+  <button type="button" class="secondary" id="customOverigApplyBtn">Toevoegen</button>
+  <button type="button" class="secondary" id="customOverigClearBtn">Leeg</button>
+</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Categorie</th>
+        <th>Werkzaamheid</th>
+        <th>Eenheid</th>
+        <th class="right">Prijs (excl.)</th>
+        <th class="right">Aantal</th>
+        <th class="right">Totaal</th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody"></tbody>
+  </table>
+
+  <div class="totals">
+    <div class="totals-row">
+      <span>Subtotaal (excl. btw)</span>
+      <span id="subExcl">€0,00</span>
+    </div>
+    <div class="totals-row">
+      <span>BTW 21%</span>
+      <span id="btw">€0,00</span>
+    </div>
+    <div class="totals-row total">
+      <span>Totaal incl. btw</span>
+      <span id="totalIncl">€0,00</span>
+    </div>
+  </div>
+
+  <div class="offerte-box">
+    <h2>Offertetekst</h2>
+
+    <div class="offerte-header-inputs">
+      <input type="text" id="klantNaam" placeholder="Naam klant (optioneel)" />
+      <input type="text" id="projectNaam" placeholder="Project / omschrijving (optioneel)" />
+      <input type="text" id="plaatsDatum" placeholder="Plaats + datum (optioneel)" />
+    </div>
+
+    <div id="projectsRow" class="offerte-header-inputs" style="margin-top:.25rem;">
+      <select id="projectsSelect" style="flex:1 1 280px;">
+        <option value="">Project kiezen...</option>
+      </select>
+      <button type="button" class="secondary" id="newProjectBtn">Nieuw</button>
+      <button type="button" class="secondary" id="saveProjectBtn">Opslaan</button>
+      <button type="button" class="secondary" id="loadProjectBtn">Laden</button>
+      <button type="button" class="secondary" id="deleteProjectBtn">Verwijderen</button>
+    </div>
+
+    <div id="hintRow" class="muted" style="margin:.25rem 0 .5rem 0;">
+      Tip: “Opslaan” bewaart ook alle aantallen + PVC-diameters + voorrijkosten.
+    </div>
+
+    <div style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center;">
+      <button type="button" id="genTextBtn">Genereer offertetekst</button>
+      <button type="button" class="secondary" id="selectTextBtn">Selecteer tekst</button>
+      <button type="button" class="secondary" id="pdfBtn">Download als PDF</button>
+      <button type="button" class="secondary" id="emailBtn">E-mail met offerte</button>
+    </div>
+
+    <textarea id="offerteText" placeholder="Hier verschijnt de offertetekst. Je kunt deze kopiëren en plakken in Word, e-mail of je offerteprogramma."></textarea>
+  </div>
+</main>
+
+<script>
+/** =========================
+ *  DATA (1x) – geen dubbele PVC-riolering regels
+ *  ========================= */
+const itemsFromCsv = [
+  // STRAATWERK
+  { "category": "STRAATWERK", "name": "Bestrating uitbreken", "unit": "m²", "priceCsv": 15.0 },
+  { "category": "STRAATWERK", "name": "Herbestarten tegels", "unit": "m²", "priceCsv": 25.0 },
+  { "category": "STRAATWERK", "name": "Herbestarten stenen", "unit": "m²", "priceCsv": 30.0 },
+  { "category": "STRAATWERK", "name": "Bestrating aanleggen tegels nieuw", "unit": "m²", "priceCsv": 35.0 },
+  { "category": "STRAATWERK", "name": "bestrating aanleggen stenen nieuw", "unit": "m²", "priceCsv": 25.0 },
+  { "category": "STRAATWERK", "name": "bloembak aanbrengen", "unit": "m1", "priceCsv": 25.0 },
+  { "category": "STRAATWERK", "name": "Tegels zagen", "unit": "m1", "priceCsv": 15.0 },
+  { "category": "STRAATWERK", "name": "Pasmaken dmv knippen", "unit": "m1", "priceCsv": 8.0 },
+  { "category": "STRAATWERK", "name": "Opsluitbanden uitbreken", "unit": "m1", "priceCsv": 6.0 },
+  { "category": "STRAATWERK", "name": "Opsluitbanden plaatsen 6x20", "unit": "m1", "priceCsv": 5.0 },
+  { "category": "STRAATWERK", "name": "Opsluitbanden plaatsen 10/20", "unit": "m1", "priceCsv": 12.0 },
+  { "category": "STRAATWERK", "name": "Opsluitbanden plaatsen 13/15 en groter", "unit": "m1", "priceCsv": 12.0 },
+  { "category": "STRAATWERK", "name": "Voegen van tuin (excl. materiaal)", "unit": "m²", "priceCsv": 12.0 },
+  { "category": "STRAATWERK", "name": "Verwijderen van voegsel aan oude tegels", "unit": "m²", "priceCsv": 8.0 },
+  { "category": "STRAATWERK", "name": "Puin afvoeren", "unit": "klus", "priceCsv": 75.0 },
+
+  // GRONDWERK
+  { "category": "GRONDWERK", "name": "Zand aanbrengen+leveren", "unit": "m³", "priceCsv": 60.0 },
+  { "category": "GRONDWERK", "name": "Grond afgraven", "unit": "m³", "priceCsv": 25.0 },
+  { "category": "GRONDWERK", "name": "Tuinaarde aanbrengen", "unit": "m³", "priceCsv": 55.0 },
+  { "category": "GRONDWERK", "name": "Grond afgraven (zonder schone verklaring)", "unit": "m³", "priceCsv": 95.0 },
+  { "category": "GRONDWERK", "name": "Grond aanbrengen incl. leveren - Teelaarde", "unit": "m³", "priceCsv": 65.0 },
+  { "category": "GRONDWERK", "name": "Grond aanbrengen incl. leveren - Tuinaarde", "unit": "m³", "priceCsv": 55.0 },
+  { "category": "GRONDWERK", "name": "Grond aanbrengen incl. leveren - Schrale grond", "unit": "m³", "priceCsv": 45.0 },
+  { "category": "GRONDWERK", "name": "Grond aanbrengen incl. leveren - Vulgrond / ophooggrond", "unit": "m³", "priceCsv": 40.0 },
+  { "category": "GRONDWERK", "name": "Grond aanbrengen incl. leveren - Compostgrond", "unit": "m³", "priceCsv": 70.0 },
+  { "category": "GRONDWERK", "name": "Gras leggen", "unit": "m²", "priceCsv": 10.0 },
+  { "category": "GRONDWERK", "name": "Drainage aanleggen", "unit": "meter", "priceCsv": 15.0 },
+  { "category": "GRONDWERK", "name": "Tuinpad aanleggen", "unit": "m²", "priceCsv": 30.0 },
+  { "category": "GRONDWERK", "name": "Beplanting aanbrengen", "unit": "stuk", "priceCsv": 6.0 },
+  { "category": "GRONDWERK", "name": "Boom plaatsen", "unit": "stuk", "priceCsv": 40.0 },
+  { "category": "GRONDWERK", "name": "BigBag zand incl. levering", "unit": "stuk", "priceCsv": 85.0 },
+  { "category": "GRONDWERK", "name": "BigBag teelaarde incl. levering", "unit": "stuk", "priceCsv": 115.0 },
+  { "category": "GRONDWERK", "name": "BigBag schrale grond incl. levering", "unit": "stuk", "priceCsv": 95.0 },
+  { "category": "GRONDWERK", "name": "BigBag vulgrond incl. levering", "unit": "stuk", "priceCsv": 75.0 },
+
+  // ARBEID
+  { "category": "ARBEID", "name": "Stratenmaker (per uur)", "unit": "uur", "priceCsv": 60.0 },
+  { "category": "ARBEID", "name": "Opperman (per uur)", "unit": "uur", "priceCsv": 45.0 },
+
+  // GEMEENTEWERK
+  { "category": "GEMEENTEWERK", "name": "Trottoirbanden plaatsen", "unit": "meter", "priceCsv": 18.0 },
+  { "category": "GEMEENTEWERK", "name": "Riolering leggen PVC Ø125-160mm", "unit": "meter", "priceCsv": 65.0 },
+  { "category": "GEMEENTEWERK", "name": "Riolering leggen PVC Ø200-250mm", "unit": "meter", "priceCsv": 85.0 },
+  { "category": "GEMEENTEWERK", "name": "Kolken leveren en plaatsen", "unit": "stuk", "priceCsv": 350.0 },
+  { "category": "GEMEENTEWERK", "name": "Fundering (menggranulaat) aanbrengen", "unit": "m³", "priceCsv": 40.0 },
+  { "category": "GEMEENTEWERK", "name": "Putkoppen leveren en plaatsen", "unit": "stuk", "priceCsv": 200.0 },
+  { "category": "GEMEENTEWERK", "name": "Straatkolkdeksels leveren en plaatsen", "unit": "stuk", "priceCsv": 175.0 },
+  { "category": "GEMEENTEWERK", "name": "Aansluiten kolk op hoofdriool", "unit": "stuk", "priceCsv": 150.0 },
+
+  // PVC RIOLERING – varianten (110/125/160/200)
+  {
+    category: "PVC RIOLERING",
+    name: "PVC buis SN8 - 5m",
+    unit: "stuk",
+    variant: "110",
+    variants: {
+      "110": { label: "Ø110", price: 21.60 },
+      "125": { label: "Ø125", price: 22.46 },
+      "160": { label: "Ø160", price: 42.00 },
+      "200": { label: "Ø200", price: 75.80 }
+    },
+    priceCsv: 21.60
+  },
+  {
+    category: "PVC RIOLERING",
+    name: "PVC bocht 45° SN4",
+    unit: "stuk",
+    variant: "110",
+    variants: {
+      "110": { label: "Ø110", price: 6.10 },
+      "125": { label: "Ø125", price: 7.70 },
+      "160": { label: "Ø160", price: 12.40 },
+      "200": { label: "Ø200", price: 30.10 }
+    },
+    priceCsv: 6.10
+  },
+  {
+    category: "PVC RIOLERING",
+    name: "PVC bocht 90° SN4",
+    unit: "stuk",
+    variant: "110",
+    variants: {
+      "110": { label: "Ø110", price: 6.10 },
+      "125": { label: "Ø125", price: 10.00 },
+      "160": { label: "Ø160", price: 18.50 },
+      "200": { label: "Ø200", price: 44.00 }
+    },
+    priceCsv: 6.10
+  },
+  {
+    category: "PVC RIOLERING",
+    name: "PVC T-stuk 45° SN4",
+    unit: "stuk",
+    variant: "110",
+    variants: {
+      "110": { label: "Ø110", price: 8.10 },
+      "125": { label: "Ø125", price: 10.50 },
+      "160": { label: "Ø160", price: 20.40 },
+      "200": { label: "Ø200", price: 46.40 }
+    },
+    priceCsv: 8.10
+  },
+  {
+    category: "PVC RIOLERING",
+    name: "PVC Y-stuk 45° SN4",
+    unit: "stuk",
+    variant: "110",
+    variants: {
+      "110": { label: "Ø110", price: 8.10 },
+      "125": { label: "Ø125", price: 10.50 },
+      "160": { label: "Ø160", price: 20.40 },
+      "200": { label: "Ø200", price: 46.40 }
+    },
+    priceCsv: 8.10
+  },
+  {
+    category: "PVC RIOLERING",
+    name: "PVC overschuifmof SN4",
+    unit: "stuk",
+    variant: "110",
+    variants: {
+      "110": { label: "Ø110", price: 11.80 },
+      "125": { label: "Ø125", price: 14.50 },
+      "160": { label: "Ø160", price: 22.00 },
+      "200": { label: "Ø200", price: 49.00 }
+    },
+    priceCsv: 11.80
+  },
+  {
+    category: "PVC RIOLERING",
+    name: "PVC verloop SN4 (110/125)",
+    unit: "stuk",
+    variant: "110",
+    variants: {
+      "110": { label: "110→125", price: 19.40 },
+      "125": { label: "125→110", price: 19.40 },
+      "160": { label: "160→125", price: 24.90 },
+      "200": { label: "200→160", price: 34.90 }
+    },
+    priceCsv: 19.40
+  },
+
+  // PVC (los materiaal) – blijft gewoon 1 regel per product
+  { "category": "PVC", "name": "PVC buis Ø50 mm", "unit": "m¹", "priceCsv": 1.75 },
+  { "category": "PVC", "name": "PVC buis Ø75 mm", "unit": "m¹", "priceCsv": 2.40 },
+  { "category": "PVC", "name": "PVC buis Ø110 mm", "unit": "m¹", "priceCsv": 3.60 },
+  { "category": "PVC", "name": "PVC buis Ø125 mm", "unit": "m¹", "priceCsv": 4.80 },
+  { "category": "PVC", "name": "PVC buis Ø160 mm", "unit": "m¹", "priceCsv": 6.80 },
+
+  { "category": "PVC", "name": "PVC schuifmof Ø110 mm (2x manchet)", "unit": "stuk", "priceCsv": 2.50 },
+  { "category": "PVC", "name": "PVC overschuifmof Ø110 mm", "unit": "stuk", "priceCsv": 4.95 },
+  { "category": "PVC", "name": "PVC steekmof Ø110 mm (lijm)", "unit": "stuk", "priceCsv": 2.25 },
+  { "category": "PVC", "name": "PVC bocht 45° mof/spie Ø110 mm", "unit": "stuk", "priceCsv": 4.75 },
+  { "category": "PVC", "name": "PVC bocht 90° mof/spie Ø110 mm", "unit": "stuk", "priceCsv": 5.50 },
+  { "category": "PVC", "name": "PVC T-stuk 45° Ø110 mm", "unit": "stuk", "priceCsv": 7.00 },
+  { "category": "PVC", "name": "PVC ontstoppingsstuk Ø110 mm", "unit": "stuk", "priceCsv": 10.00 },
+  { "category": "PVC", "name": "PVC eindkap Ø110 mm", "unit": "stuk", "priceCsv": 1.75 },
+  { "category": "PVC", "name": "PVC verloop T-stuk 110/50 mm 45°", "unit": "stuk", "priceCsv": 4.50 },
+
+  // VERHUUR
+  { "category": "VERHUUR", "name": "Mini kraan Kubota 1000 kg – dag", "unit": "dag", "priceCsv": 120.0 },
+  { "category": "VERHUUR", "name": "Mini kraan Kubota 1000 kg – week", "unit": "week", "priceCsv": 415.0 },
+  { "category": "VERHUUR", "name": "Messersi rupsdumper – dag", "unit": "dag", "priceCsv": 95.0 },
+  { "category": "VERHUUR", "name": "Messersi rupsdumper – week", "unit": "week", "priceCsv": 350.0 },
+  { "category": "VERHUUR", "name": "Giant G1500L X-TRA shovel – dag", "unit": "dag", "priceCsv": 140.0 },
+  { "category": "VERHUUR", "name": "Giant G1500L X-TRA shovel – week", "unit": "week", "priceCsv": 490.0 },
+  { "category": "VERHUUR", "name": "Afschotlaser – dag", "unit": "dag", "priceCsv": 30.0 },
+  { "category": "VERHUUR", "name": "Afschotlaser – week", "unit": "week", "priceCsv": 90.0 },
+  { "category": "VERHUUR", "name": "Carat zaagtafel 120 cm – dag", "unit": "dag", "priceCsv": 60.0 },
+  { "category": "VERHUUR", "name": "Carat zaagtafel 120 cm – week", "unit": "week", "priceCsv": 180.0 },
+  { "category": "VERHUUR", "name": "Lumag trilplaat 1 ton – dag", "unit": "dag", "priceCsv": 30.0 },
+  { "category": "VERHUUR", "name": "Lumag trilplaat 1 ton – week", "unit": "week", "priceCsv": 100.0 },
+  { "category": "VERHUUR", "name": "Trilplaat 3,5 ton – dag", "unit": "dag", "priceCsv": 40.0 },
+  { "category": "VERHUUR", "name": "Trilplaat 3,5 ton – week", "unit": "week", "priceCsv": 130.0 },
+  { "category": "VERHUUR", "name": "Trilplaat 6 ton – dag", "unit": "dag", "priceCsv": 50.0 },
+  { "category": "VERHUUR", "name": "Trilplaat 6 ton – week", "unit": "week", "priceCsv": 170.0 },
+  { "category": "VERHUUR", "name": "Wacker stamper – dag", "unit": "dag", "priceCsv": 35.0 },
+  { "category": "VERHUUR", "name": "Wacker stamper – week", "unit": "week", "priceCsv": 110.0 },
+  { "category": "VERHUUR", "name": "Doorslijper Husqvarna K770 (300 blad) – dag", "unit": "dag", "priceCsv": 45.0 },
+  { "category": "VERHUUR", "name": "Doorslijper Husqvarna K770 (300 blad) – week", "unit": "week", "priceCsv": 140.0 },
+  { "category": "VERHUUR", "name": "Hydraulische knipper – dag", "unit": "dag", "priceCsv": 50.0 },
+  { "category": "VERHUUR", "name": "Hydraulische knipper – week", "unit": "week", "priceCsv": 160.0 },
+  { "category": "VERHUUR", "name": "Strakvlakmachine – dag", "unit": "dag", "priceCsv": 55.0 },
+  { "category": "VERHUUR", "name": "Strakvlakmachine – week", "unit": "week", "priceCsv": 180.0 },
+
+  // CONTAINERS
+  { "category": "GRONDCONTAINERS (SCHONE GROND)", "name": "Grond 3 m³", "unit": "stuks", "priceCsv": 285.0 },
+  { "category": "GRONDCONTAINERS (SCHONE GROND)", "name": "Grond 6 m³", "unit": "stuks", "priceCsv": 389.0 },
+  { "category": "GRONDCONTAINERS (SCHONE GROND)", "name": "Grond 10 m³", "unit": "stuks", "priceCsv": 525.0 },
+  { "category": "GRONDCONTAINERS (SCHONE GROND)", "name": "Grond 15 m³", "unit": "stuks", "priceCsv": 825.0 },
+
+  { "category": "GROENCONTAINERS (TUINAFVAL)", "name": "Groen 3 m³", "unit": "stuks", "priceCsv": 139.0 },
+  { "category": "GROENCONTAINERS (TUINAFVAL)", "name": "Groen 6 m³", "unit": "stuks", "priceCsv": 172.0 },
+  { "category": "GROENCONTAINERS (TUINAFVAL)", "name": "Groen 10 m³", "unit": "stuks", "priceCsv": 220.0 },
+  { "category": "GROENCONTAINERS (TUINAFVAL)", "name": "Groen 20 m³", "unit": "stuks", "priceCsv": 468.0 },
+  { "category": "GROENCONTAINERS (TUINAFVAL)", "name": "Groen 40 m³", "unit": "stuks", "priceCsv": 690.0 },
+
+  { "category": "BOUW- & SLOOPCONTAINERS", "name": "Bouw & sloop 3 m³", "unit": "stuks", "priceCsv": 230.0 },
+  { "category": "BOUW- & SLOOPCONTAINERS", "name": "Bouw & sloop 6 m³", "unit": "stuks", "priceCsv": 313.0 },
+  { "category": "BOUW- & SLOOPCONTAINERS", "name": "Bouw & sloop 10 m³", "unit": "stuks", "priceCsv": 395.0 },
+  { "category": "BOUW- & SLOOPCONTAINERS", "name": "Bouw & sloop 20 m³", "unit": "stuks", "priceCsv": 980.0 },
+  { "category": "BOUW- & SLOOPCONTAINERS", "name": "Bouw & sloop 40 m³", "unit": "stuks", "priceCsv": 1440.0 },
+
+  { "category": "PUINCONTAINERS", "name": "Puin 3 m³", "unit": "stuks", "priceCsv": 129.0 },
+  { "category": "PUINCONTAINERS", "name": "Puin 6 m³", "unit": "stuks", "priceCsv": 139.0 },
+  { "category": "PUINCONTAINERS", "name": "Puin 10 m³", "unit": "stuks", "priceCsv": 199.0 },
+  { "category": "PUINCONTAINERS", "name": "Puin 20 m³", "unit": "stuks", "priceCsv": 350.0 },
+  { "category": "PUINCONTAINERS", "name": "Puin 40 m³", "unit": "stuks", "priceCsv": 550.0 },
+
+  { "category": "GRONDCONTAINERS VERVUILD", "name": "Grond 3 m³", "unit": "stuks", "priceCsv": 500.0 },
+  { "category": "GRONDCONTAINERS VERVUILD", "name": "Grond 6 m³", "unit": "stuks", "priceCsv": 600.0 },
+  { "category": "GRONDCONTAINERS VERVUILD", "name": "Grond 10 m³", "unit": "stuks", "priceCsv": 700.0 },
+  { "category": "GRONDCONTAINERS VERVUILD", "name": "Grond 15 m³", "unit": "stuks", "priceCsv": 1100.0 },
+
+  // OVERIG
+  { "category": "OVERIG", "name": "Transformator plaatsen (in-lite)", "unit": "stuk", "priceCsv": 80 },
+  { "category": "OVERIG", "name": "Grondkabel aanleggen en ingraven", "unit": "m¹", "priceCsv": 10 },
+  { "category": "OVERIG", "name": "Tuinverlichting plaatsen en aansluiten", "unit": "punt", "priceCsv": 30 },
+  { "category": "OVERIG", "name": "Complete aanleg tuinverlichting", "unit": "klus", "priceCsv": 225 },
+  { "category": "OVERIG", "name": "Voorrijkosten", "unit": "stuks", "priceCsv": 65.0 },
+  { "category": "OVERIG", "name": "Brandstofkosten machines", "unit": "dag/machines", "priceCsv": 25.0 }
+];
+
+/** =========================
+ *  OVERRIDES (optioneel)
+ *  ========================= */
+const overridePrices = {
+  "Bestrating uitbreken": 15.0,
+  "Herbestarten stenen": 25.0,
+  "Bestrating aanleggen tegels nieuw": 45.0,
+  "bestrating aanleggen stenen nieuw": 40.0,
+  "Tegels zagen": 12.0,
+  "Pasmaken dmv knippen": 10.0,
+  "Voegen van tuin (excl. materiaal)": 12.0,
+  "Verwijderen van voegsel aan oude tegels": 10.0,
+  "Puin afvoeren": 20.0,
+  "Grond afgraven": 18.0,
+  "Stratenmaker (per uur)": 60.0,
+  "Opperman (per uur)": 45.0
+};
+
+function getEffectivePrice(name, csvPrice) {
+  const o = overridePrices[name];
+  if (typeof o === "number") return Math.max(Number(csvPrice || 0), o);
+  return Number(csvPrice || 0);
+}
+
+/** =========================
+ *  NORMALIZE ITEMS (met vaste key)
+ *  ========================= */
+function makeKey(category, name) {
+  return (String(category||"") + "|" + String(name||"")).toLowerCase();
+}
+
+const items = itemsFromCsv.map((it) => {
+  const base = {
+    key: makeKey(it.category, it.name),
+    category: it.category || "",
+    name: it.name || "",
+    unit: it.unit || "",
+    qty: 0,
+    variants: null,
+    variant: null,
+    priceCsv: Number(it.priceCsv || 0),
+    price: 0,
+  };
+
+  if (it.variants && typeof it.variants === "object") {
+    const keys = Object.keys(it.variants);
+    const initKey = (it.variant && it.variants[it.variant]) ? it.variant : keys[0];
+    const initPrice = Number(it.variants[initKey]?.price ?? it.priceCsv ?? 0);
+    base.variants = it.variants;
+    base.variant = initKey;
+    base.priceCsv = initPrice;
+    base.price = initPrice;
+  } else {
+    base.price = getEffectivePrice(base.name, base.priceCsv);
+  }
+
+  return base;
+});
+
+
+// Eigen regel (altijd onder OVERIG)
+const customOverigItem = {
+  key: "CUSTOM_OVERIG",
+  category: "OVERIG",
+  name: "",
+  unit: "stuks",
+  qty: 0,
+  variants: null,
+  variant: null,
+  priceCsv: 0,
+  price: 0,
+  isCustom: true
+};
+items.push(customOverigItem);
+/** =========================
+ *  DOM refs
+ *  ========================= */
+const bodyEl = document.getElementById("itemsBody");
+const searchInput = document.getElementById("searchInput");
+const voorrijToggle = document.getElementById("voorrijToggle");
+const offerteText = document.getElementById("offerteText");
+const klantNaamInput = document.getElementById("klantNaam");
+const projectNaamInput = document.getElementById("projectNaam");
+const plaatsDatumInput = document.getElementById("plaatsDatum");
+
+const customOverigText = document.getElementById("customOverigText");
+const customOverigPrice = document.getElementById("customOverigPrice");
+const customOverigQty = document.getElementById("customOverigQty");
+const customOverigApplyBtn = document.getElementById("customOverigApplyBtn");
+const customOverigClearBtn = document.getElementById("customOverigClearBtn");
+
+/** =========================
+ *  UI helpers
+ *  ========================= */
+let activeFilter = "ALL";
+
+function formatEuro(v) {
+  const n = Number(v || 0);
+  return "€" + n.toFixed(2).replace(".", ",");
+}
+
+
+function parseNum(val) {
+  return parseFloat(String(val || "").replace(",", ".")) || 0;
+}
+
+function syncCustomOverigFromInputs() {
+  const desc = (customOverigText?.value || "").trim();
+  const price = parseNum(customOverigPrice?.value);
+  const qtyRaw = (customOverigQty?.value || "").trim();
+  const qty = qtyRaw === "" ? (desc || price ? 1 : 0) : parseNum(qtyRaw);
+
+  customOverigItem.name = desc;
+  customOverigItem.price = price;
+  customOverigItem.qty = qty;
+}
+
+function hasCustomOverig() {
+  return (customOverigItem.name || "").trim() !== "" || Number(customOverigItem.price || 0) > 0;
+}
+
+/** =========================
+ *  FILTER LOGIC (PVC / CONTAINERS correct)
+ *  ========================= */
+function matchFilter(it) {
+  const cat = String(it.category || "");
+  const up = cat.toUpperCase();
+
+  if (activeFilter === "ALL") return true;
+  if (activeFilter === "STRAATWERK") return it.category === "STRAATWERK";
+  if (activeFilter === "GRONDWERK") return it.category === "GRONDWERK";
+  if (activeFilter === "VERHUUR") return it.category === "VERHUUR";
+  if (activeFilter === "OVERIG") return it.category === "OVERIG";
+
+  // Containers = alles met CONTAINER(S) in categorie
+  if (activeFilter === "CONTAINERS") return up.includes("CONTAINER");
+
+  // PVC = alles met PVC in categorie (dus ook PVC RIOLERING)
+  if (activeFilter === "PVC") return up.includes("PVC");
+
+  return true;
+}
+
+/** =========================
+ *  RENDER
+ *  ========================= */
+function renderRows() {
+  const term = (searchInput.value || "").toLowerCase().trim();
+  bodyEl.innerHTML = "";
+
+  for (const it of items) {
+    if (it.isCustom && !hasCustomOverig()) continue;
+    if (!matchFilter(it)) continue;
+    if (term && !String(it.name || "").toLowerCase().includes(term)) continue;
+
+    const tr = document.createElement("tr");
+    tr.className = "item-row";
+
+    const tdCat = document.createElement("td");
+    tdCat.textContent = it.category || "-";
+
+    const tdName = document.createElement("td");
+
+    const tdUnit = document.createElement("td");
+    tdUnit.textContent = it.unit || "";
+
+    const tdPrice = document.createElement("td");
+    tdPrice.className = "right";
+    tdPrice.textContent = formatEuro(it.price);
+
+    const tdQty = document.createElement("td");
+    tdQty.className = "right";
+
+    const tdTotal = document.createElement("td");
+    tdTotal.className = "right";
+
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.min = "0";
+    inp.step = "0.01";
+    inp.value = it.qty ? String(it.qty).replace(".", ",") : "";
+    inp.style.width = "70px";
+
+    function refreshLine() {
+      const lineTotal = (Number(it.qty || 0) * Number(it.price || 0));
+      tdTotal.textContent = lineTotal ? formatEuro(lineTotal) : "€0,00";
+      updateTotals();
+    }
+
+    inp.addEventListener("input", () => {
+      it.qty = parseFloat((inp.value || "").replace(",", ".")) || 0;
+      if (it.isCustom && customOverigQty) customOverigQty.value = it.qty ? String(it.qty).replace(".", ",") : "";
+      refreshLine();
+    });
+
+    tdQty.appendChild(inp);
+
+    // Naam + variant dropdown
+    if (it.variants) {
+      const wrap = document.createElement("div");
+      wrap.style.display = "flex";
+      wrap.style.gap = "0.5rem";
+      wrap.style.alignItems = "center";
+      wrap.style.flexWrap = "wrap";
+
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = it.name;
+
+      const sel = document.createElement("select");
+      sel.style.minWidth = "110px";
+
+      for (const key of Object.keys(it.variants)) {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = it.variants[key].label || key;
+        if (key === it.variant) opt.selected = true;
+        sel.appendChild(opt);
+      }
+
+      sel.addEventListener("change", () => {
+        it.variant = sel.value;
+        it.price = Number(it.variants[it.variant]?.price || 0);
+        tdPrice.textContent = formatEuro(it.price);
+        refreshLine();
+      });
+
+      wrap.appendChild(nameSpan);
+      wrap.appendChild(sel);
+      tdName.appendChild(wrap);
+    } else {
+      tdName.textContent = it.name;
+    }
+
+    // init totals
+    refreshLine();
+
+    tr.appendChild(tdCat);
+    tr.appendChild(tdName);
+    tr.appendChild(tdUnit);
+    tr.appendChild(tdPrice);
+    tr.appendChild(tdQty);
+    tr.appendChild(tdTotal);
+
+    bodyEl.appendChild(tr);
+  }
+}
+
+/** =========================
+ *  TOTALS
+ *  ========================= */
+function calculateTotals() {
+  let subtotal = 0;
+  for (const it of items) {
+    if (!it.qty) continue;
+    subtotal += Number(it.qty) * Number(it.price);
+  }
+  if (voorrijToggle.checked) subtotal += 65;
+
+  const btw = subtotal * 0.21;
+  const incl = subtotal + btw;
+  return { subtotal, btw, incl };
+}
+
+function updateTotals() {
+  const t = calculateTotals();
+  document.getElementById("subExcl").textContent = formatEuro(t.subtotal);
+  document.getElementById("btw").textContent = formatEuro(t.btw);
+  document.getElementById("totalIncl").textContent = formatEuro(t.incl);
+}
+
+searchInput.addEventListener("input", renderRows);
+voorrijToggle.addEventListener("change", () => { updateTotals(); saveDraftToProjectIfSelected(); });
+
+// Eigen regel (Overig)
+function applyCustomOverig(andRerender=true) {
+  syncCustomOverigFromInputs();
+  if (andRerender) {
+    renderRows();
+    updateTotals();
+  } else {
+    updateTotals();
+  }
+  saveDraftToProjectIfSelected();
+}
+
+if (customOverigApplyBtn) customOverigApplyBtn.addEventListener("click", () => applyCustomOverig(true));
+if (customOverigClearBtn) customOverigClearBtn.addEventListener("click", () => {
+  if (customOverigText) customOverigText.value = "";
+  if (customOverigPrice) customOverigPrice.value = "";
+  if (customOverigQty) customOverigQty.value = "";
+  applyCustomOverig(true);
+});
+
+for (const el of [customOverigText, customOverigPrice, customOverigQty]) {
+  if (!el) continue;
+  el.addEventListener("input", () => applyCustomOverig(false));
+}
+
+/** =========================
+ *  FILTER BUTTONS
+ *  ========================= */
+const allBtn = document.getElementById("allBtn");
+const straatwerkBtn = document.getElementById("straatwerkBtn");
+const grondwerkBtn = document.getElementById("grondwerkBtn");
+const pvcBtn = document.getElementById("pvcBtn");
+const containersBtn = document.getElementById("containersBtn");
+const verhuurBtn = document.getElementById("verhuurBtn");
+const overigBtn = document.getElementById("overigBtn");
+
+function setFilter(filter) {
+  activeFilter = filter;
+
+  for (const btn of [allBtn, straatwerkBtn, grondwerkBtn, pvcBtn, containersBtn, verhuurBtn, overigBtn]) {
+    btn.classList.remove("active");
+  }
+
+  if (filter === "ALL") allBtn.classList.add("active");
+  if (filter === "STRAATWERK") straatwerkBtn.classList.add("active");
+  if (filter === "GRONDWERK") grondwerkBtn.classList.add("active");
+  if (filter === "PVC") pvcBtn.classList.add("active");
+  if (filter === "CONTAINERS") containersBtn.classList.add("active");
+  if (filter === "VERHUUR") verhuurBtn.classList.add("active");
+  if (filter === "OVERIG") overigBtn.classList.add("active");
+
+  renderRows();
+}
+
+allBtn.addEventListener("click", () => setFilter("ALL"));
+straatwerkBtn.addEventListener("click", () => setFilter("STRAATWERK"));
+grondwerkBtn.addEventListener("click", () => setFilter("GRONDWERK"));
+pvcBtn.addEventListener("click", () => setFilter("PVC"));
+containersBtn.addEventListener("click", () => setFilter("CONTAINERS"));
+verhuurBtn.addEventListener("click", () => setFilter("VERHUUR"));
+overigBtn.addEventListener("click", () => setFilter("OVERIG"));
+
+/** =========================
+ *  OFFERTETEKST
+ *  ========================= */
+document.getElementById("genTextBtn").addEventListener("click", () => {
+  const t = calculateTotals();
+  const regels = [];
+
+  const klant = (klantNaamInput.value || "").trim();
+  const project = (projectNaamInput.value || "").trim();
+  const plaatsDatum = (plaatsDatumInput.value || "").trim();
+
+  if (plaatsDatum) { regels.push(plaatsDatum, ""); }
+
+  regels.push(klant ? ("Geachte " + klant + ",") : "Geachte heer/mevrouw,");
+  regels.push("");
+  regels.push("Hartelijk dank voor uw aanvraag.");
+  regels.push("Hierbij ontvangt u onze offerte voor het uitvoeren van de onderstaande werkzaamheden:");
+  regels.push("");
+
+  if (project) { regels.push(project, ""); }
+
+  regels.push("Werkzaamheden:");
+
+  for (const it of items) {
+    if (!it.qty) continue;
+    const lineTotal = Number(it.qty) * Number(it.price);
+    const eenh = it.unit ? (" " + it.unit) : "";
+
+    const variantTxt = it.variants ? (" (" + (it.variants[it.variant]?.label || it.variant) + ")") : "";
+    regels.push("• " + String(it.qty).replace(".", ",") + eenh + " " + it.name + variantTxt + " à " + formatEuro(it.price) + " = " + formatEuro(lineTotal));
+  }
+
+  if (voorrijToggle.checked) {
+    regels.push("• 1x Voorrijkosten per klus = " + formatEuro(65));
+  }
+
+  regels.push("");
+  regels.push("Subtotaal (excl. btw): " + formatEuro(t.subtotal));
+  regels.push("BTW 21%: " + formatEuro(t.btw));
+  regels.push("Totaal (incl. btw): " + formatEuro(t.incl));
+  regels.push("");
+  regels.push("Prijzen zijn vermeld exclusief eventuele meerwerkzaamheden.");
+  regels.push("");
+  regels.push("Met vriendelijke groet,");
+  regels.push("Dennis van den Akker");
+  regels.push("D van den Akker bestrating");
+
+  offerteText.value = regels.join("\n");
+  saveDraftToProjectIfSelected();
+});
+
+document.getElementById("selectTextBtn").addEventListener("click", () => {
+  offerteText.focus();
+  offerteText.select();
+});
+
+/** =========================
+ *  PDF + EMAIL
+ *  ========================= */
+document.getElementById("pdfBtn").addEventListener("click", () => window.print());
+
+document.getElementById("emailBtn").addEventListener("click", () => {
+  const subject = "Offerte " + ((projectNaamInput.value || "").trim() || "");
+  const body = offerteText.value || "";
+  const mailto = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  window.location.href = mailto;
+});
+
+/** =========================
+ *  PROJECT OPSLAAN/LADEN (incl. aantallen/varianten)
+ *  ========================= */
+const STORAGE_KEY = "akker_projects_v1";
+const OLD_OFFERS_KEY = "akker_offertes"; // oude opslag (alleen tekst)
+const projectsSelect = document.getElementById("projectsSelect");
+
+const newProjectBtn = document.getElementById("newProjectBtn");
+const saveProjectBtn = document.getElementById("saveProjectBtn");
+const loadProjectBtn = document.getElementById("loadProjectBtn");
+const deleteProjectBtn = document.getElementById("deleteProjectBtn");
+
+function readProjects() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeProjects(arr) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr || []));
+}
+
+function projectLabel(p) {
+  const klant = (p.klant || "Onbekende klant").trim() || "Onbekende klant";
+  const proj = (p.project || "Zonder project").trim() || "Zonder project";
+  const dat = (p.datum || "").trim();
+  return dat ? `${klant} – ${proj} (${dat})` : `${klant} – ${proj}`;
+}
+
+function loadProjectsList() {
+  const arr = readProjects();
+  const current = projectsSelect.value;
+
+  projectsSelect.innerHTML = '<option value="">Project kiezen...</option>';
+  arr.forEach((p, idx) => {
+    const opt = document.createElement("option");
+    opt.value = String(idx);
+    opt.textContent = projectLabel(p);
+    projectsSelect.appendChild(opt);
+  });
+
+  // probeer selectie te bewaren
+  if (current !== "") projectsSelect.value = current;
+}
+
+function snapshotState() {
+  const stateItems = {};
+  for (const it of items) {
+    stateItems[it.key] = {
+      qty: Number(it.qty || 0),
+      variant: it.variants ? String(it.variant || "") : null
+    };
+  }
+  return {
+    klant: (klantNaamInput.value || "").trim(),
+    project: (projectNaamInput.value || "").trim(),
+    datum: (plaatsDatumInput.value || "").trim(),
+    voorrij: !!voorrijToggle.checked,
+    offerteText: (offerteText.value || ""),
+    items: stateItems,
+    customOverig: {
+      text: (customOverigText?.value || ""),
+      price: (customOverigPrice?.value || ""),
+      qty: (customOverigQty?.value || "")
+    },
+    savedAt: new Date().toISOString()
+  };
+}
+
+function applyState(p) {
+  klantNaamInput.value = p.klant || "";
+  projectNaamInput.value = p.project || "";
+  plaatsDatumInput.value = p.datum || "";
+  voorrijToggle.checked = !!p.voorrij;
+  offerteText.value = p.offerteText || "";
+
+  // Eigen regel (Overig)
+  const co = p.customOverig || {};
+  if (customOverigText) customOverigText.value = co.text || "";
+  if (customOverigPrice) customOverigPrice.value = co.price || "";
+  if (customOverigQty) customOverigQty.value = co.qty || "";
+  syncCustomOverigFromInputs();
+
+  const map = p.items || {};
+  for (const it of items) {
+    const st = map[it.key];
+    if (!st) {
+      it.qty = 0;
+      // variant laten staan
+      continue;
+    }
+    it.qty = Number(st.qty || 0);
+
+    if (it.variants && st.variant && it.variants[String(st.variant)]) {
+      it.variant = String(st.variant);
+      it.price = Number(it.variants[it.variant]?.price || it.price);
+    }
+  }
+
+  renderRows();
+  updateTotals();
+}
+
+function saveDraftToProjectIfSelected() {
+  const idx = projectsSelect.value;
+  if (idx === "") return;
+
+  const arr = readProjects();
+  const n = Number(idx);
+  if (!arr[n]) return;
+
+  arr[n] = snapshotState();
+  writeProjects(arr);
+  loadProjectsList();
+  projectsSelect.value = String(n);
+}
+
+// Nieuw project
+newProjectBtn.addEventListener("click", () => {
+  // reset alles
+  klantNaamInput.value = "";
+  projectNaamInput.value = "";
+  plaatsDatumInput.value = "";
+  voorrijToggle.checked = false;
+  offerteText.value = "";
+  if (customOverigText) customOverigText.value = "";
+  if (customOverigPrice) customOverigPrice.value = "";
+  if (customOverigQty) customOverigQty.value = "";
+  syncCustomOverigFromInputs();
+  for (const it of items) { it.qty = 0; }
+  renderRows();
+  updateTotals();
+  projectsSelect.value = "";
+});
+
+// Opslaan project (nieuw of overschrijven)
+saveProjectBtn.addEventListener("click", () => {
+  const snap = snapshotState();
+  const hasAny =
+    snap.klant || snap.project || snap.datum ||
+    snap.voorrij ||
+    Object.values(snap.items).some(x => x.qty > 0) ||
+    (snap.offerteText || "").trim();
+
+  if (!hasAny) {
+    alert("Er is nog niks om op te slaan (vul iets in of zet aantallen).");
+    return;
+  }
+
+  const arr = readProjects();
+  const idx = projectsSelect.value;
+
+  if (idx === "") {
+    arr.push(snap);
+    writeProjects(arr);
+    loadProjectsList();
+    projectsSelect.value = String(arr.length - 1);
+    alert("Project opgeslagen.");
+  } else {
+    const n = Number(idx);
+    if (!arr[n]) return;
+    arr[n] = snap;
+    writeProjects(arr);
+    loadProjectsList();
+    projectsSelect.value = String(n);
+    alert("Project bijgewerkt.");
+  }
+});
+
+// Laden project
+loadProjectBtn.addEventListener("click", () => {
+  const idx = projectsSelect.value;
+  if (idx === "") return;
+
+  const arr = readProjects();
+  const p = arr[Number(idx)];
+  if (!p) return;
+  applyState(p);
+});
+
+// Verwijderen project
+deleteProjectBtn.addEventListener("click", () => {
+  const idx = projectsSelect.value;
+  if (idx === "") return;
+
+  const arr = readProjects();
+  const n = Number(idx);
+  if (!arr[n]) return;
+
+  if (!confirm("Dit project verwijderen?")) return;
+
+  arr.splice(n, 1);
+  writeProjects(arr);
+  loadProjectsList();
+  projectsSelect.value = "";
+  alert("Project verwijderd.");
+});
+
+/** =========================
+ *  MIGRATIE: oude 'akker_offertes' -> projecten (eenmalig)
+ *  ========================= */
+(function migrateOldOffersOnce() {
+  const already = localStorage.getItem(STORAGE_KEY);
+  if (already) return;
+
+  const rawOld = localStorage.getItem(OLD_OFFERS_KEY);
+  if (!rawOld) return;
+
+  let oldArr = [];
+  try { oldArr = JSON.parse(rawOld) || []; } catch { oldArr = []; }
+  if (!Array.isArray(oldArr) || oldArr.length === 0) return;
+
+  const migrated = oldArr.map(off => ({
+    klant: (off.klant || "").trim(),
+    project: (off.project || "").trim(),
+    datum: (off.datum || "").trim(),
+    voorrij: false,
+    offerteText: off.tekst || "",
+    items: {}, // oude had geen regels/qty
+    savedAt: new Date().toISOString()
+  }));
+
+  writeProjects(migrated);
+})();
+
+/** =========================
+ *  Auto-save op input headers/tekst (als project geselecteerd is)
+ *  ========================= */
+for (const el of [klantNaamInput, projectNaamInput, plaatsDatumInput, offerteText, customOverigText, customOverigPrice, customOverigQty]) {
+  el.addEventListener("input", () => saveDraftToProjectIfSelected());
+}
+
+/** =========================
+ *  INIT
+ *  ========================= */
+loadProjectsList();
+syncCustomOverigFromInputs();
+renderRows();
+updateTotals();
+</script>
+</body>
+</html>
