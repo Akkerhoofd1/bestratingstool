@@ -141,13 +141,20 @@ export default function ProfessionalPaverCalculator() {
     let halfTiles = 0;
     let totalTilesForPattern = 0;
 
+    let cuttingTiles = 0;
+
     if (bondPattern === 'halfsteens' && sLength === sWidth) {
       const oddRows = Math.ceil(stonesInWidth / 2);
       const evenRows = Math.floor(stonesInWidth / 2);
 
       wholeTiles = (oddRows * stonesInLength) + (evenRows * (stonesInLength - 1));
       halfTiles = evenRows * 2;
-      totalTilesForPattern = wholeTiles + (halfTiles / 2);
+
+      if (remainderWidth > 0) {
+        cuttingTiles = stonesInLength;
+      }
+
+      totalTilesForPattern = wholeTiles + halfTiles + cuttingTiles;
     } else {
       const patternWasteMultiplier = 1 + (patternInfo.cuttingWaste / 100);
       totalTilesForPattern = baseStones * patternWasteMultiplier;
@@ -157,7 +164,7 @@ export default function ProfessionalPaverCalculator() {
     const totalStones = Math.ceil(totalTilesForPattern + wasteStones);
 
     const totalWholeTiles = bondPattern === 'halfsteens' && sLength === sWidth
-      ? Math.ceil(wholeTiles + (wasteStones * (wholeTiles / totalTilesForPattern)))
+      ? Math.ceil(wholeTiles + cuttingTiles + (wasteStones * ((wholeTiles + cuttingTiles) / totalTilesForPattern)))
       : 0;
     const totalHalfTiles = bondPattern === 'halfsteens' && sLength === sWidth
       ? Math.ceil(halfTiles + (wasteStones * (halfTiles / totalTilesForPattern)))
@@ -173,7 +180,11 @@ export default function ProfessionalPaverCalculator() {
 
     let startAdvice = '';
     if (bondPattern === 'halfsteens' && sLength === sWidth) {
-      startAdvice = `Halfsteens verband: oneven rijen beginnen met hele tegel (${stonesInLength} stuks), even rijen beginnen met halve tegel (${stonesInLength - 1} hele + 2 halve).`;
+      if (remainderWidth > 0) {
+        startAdvice = `Halfsteens verband: oneven rijen (${stonesInLength} hele), even rijen (${stonesInLength - 1} hele + 2 halve). Let op: laatste rij in de breedte moet gezaagd worden (${remainderWidth.toFixed(1)} cm breed).`;
+      } else {
+        startAdvice = `Halfsteens verband: oneven rijen beginnen met hele tegel (${stonesInLength} stuks), even rijen beginnen met halve tegel (${stonesInLength - 1} hele + 2 halve).`;
+      }
     } else if (remainderLength > 0 && remainderWidth > 0) {
       startAdvice = `Begin met voeg (${jointCm}mm), dan hele tegel. Zaag laatste tegel in beide richtingen.`;
     } else if (remainderLength > 0) {
@@ -194,6 +205,7 @@ export default function ProfessionalPaverCalculator() {
       totalStones,
       wholeTiles: totalWholeTiles,
       halfTiles: totalHalfTiles,
+      cuttingTiles,
       stonesInLength,
       stonesInWidth,
       actualLengthUsed: (actualLengthUsed / 100).toFixed(3),
@@ -470,13 +482,15 @@ export default function ProfessionalPaverCalculator() {
                     <span className="font-bold text-green-700 text-lg">{results.wholeTiles} stuks</span>
                   </div>
                   <div className="flex justify-between items-center pb-2 border-b border-green-300">
-                    <span className="text-slate-700">Halve tegels nodig:</span>
+                    <span className="text-slate-700">Halve tegels nodig (kant-en-klaar):</span>
                     <span className="font-bold text-green-700 text-lg">{results.halfTiles} stuks</span>
                   </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-green-300">
-                    <span className="text-slate-700">Totaal oppervlakte:</span>
-                    <span className="font-bold text-green-600">{results.totalAreaCovered} m²</span>
-                  </div>
+                  {results.cuttingTiles > 0 && (
+                    <div className="flex justify-between items-center pb-2 border-b border-orange-300 bg-orange-50 px-2 py-1 rounded">
+                      <span className="text-slate-700">Extra tegels voor zaagwerk:</span>
+                      <span className="font-bold text-orange-700 text-lg">{results.cuttingTiles} stuks</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center pb-2 border-b border-green-300">
                     <span className="text-slate-700">Afval ({wastePercentage}%):</span>
                     <span className="font-bold text-green-600">{results.wasteStones} stuks</span>
@@ -484,6 +498,10 @@ export default function ProfessionalPaverCalculator() {
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-slate-900 font-semibold text-lg">Totaal te bestellen:</span>
                     <span className="font-bold text-green-900 text-2xl">{results.totalStones} stuks</span>
+                  </div>
+                  <div className="mt-3 bg-green-50 border border-green-300 rounded-lg p-3 text-sm">
+                    <div className="font-semibold text-green-900 mb-1">Besteladvies:</div>
+                    <div className="text-green-800">Bestel {results.wholeTiles} hele tegels, {results.halfTiles} halve tegels (kant-en-klaar){results.cuttingTiles > 0 ? `, en ${results.cuttingTiles} extra hele tegels voor zaagwerk` : ''}.</div>
                   </div>
                   <div className="bg-green-100 border-2 border-green-400 rounded-lg p-3 mt-3">
                     <div className="text-sm font-semibold text-green-900">Bestel advies:</div>

@@ -1,2 +1,1 @@
 bestratingsapp1
-deploy
