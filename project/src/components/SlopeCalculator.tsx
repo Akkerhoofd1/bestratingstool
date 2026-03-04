@@ -9,19 +9,46 @@ interface SlopeResults {
   startHeight: number;
   endHeight: number;
   isDescending: boolean;
+  startNAP: number;
+  endNAP: number;
 }
 
-type CalculationMode = 'manual' | 'percentage';
+type CalculationMode = 'manual' | 'percentage' | 'nap';
 
 export default function SlopeCalculator() {
-  const [mode, setMode] = useState<CalculationMode>('manual');
+  const [mode, setMode] = useState<CalculationMode>('nap');
   const [startHeightCm, setStartHeightCm] = useState<string>('');
   const [endDistanceM, setEndDistanceM] = useState<string>('');
   const [endHeightCm, setEndHeightCm] = useState<string>('');
   const [slopePercentageInput, setSlopePercentageInput] = useState<number>(2);
+  const [startNAP, setStartNAP] = useState<string>('');
+  const [endNAP, setEndNAP] = useState<string>('');
 
   const calculateSlope = (): SlopeResults | null => {
-    if (mode === 'manual') {
+    if (mode === 'nap') {
+      const startNAPValue = parseFloat(startNAP);
+      const endNAPValue = parseFloat(endNAP);
+      const endDistance = parseFloat(endDistanceM);
+
+      if (isNaN(startNAPValue) || isNaN(endNAPValue) || isNaN(endDistance) || endDistance <= 0) return null;
+
+      const heightDifferenceInMeters = endNAPValue - startNAPValue;
+      const heightDifference = Math.abs(heightDifferenceInMeters) * 100;
+      const dropPerMeter = heightDifference / endDistance;
+      const slopePercentage = dropPerMeter;
+
+      return {
+        totalDistance: endDistance,
+        heightDifference,
+        dropPerMeter,
+        slopePercentage,
+        startHeight: startNAPValue * 100,
+        endHeight: endNAPValue * 100,
+        isDescending: heightDifferenceInMeters < 0,
+        startNAP: startNAPValue,
+        endNAP: endNAPValue,
+      };
+    } else if (mode === 'manual') {
       const startHeight = parseFloat(startHeightCm);
       const endDistance = parseFloat(endDistanceM);
       const endHeight = parseFloat(endHeightCm);
@@ -30,7 +57,7 @@ export default function SlopeCalculator() {
 
       const heightDifference = startHeight - endHeight;
       const dropPerMeter = heightDifference / endDistance;
-      const slopePercentage = (dropPerMeter / 100) * 100;
+      const slopePercentage = dropPerMeter;
 
       return {
         totalDistance: endDistance,
@@ -40,6 +67,8 @@ export default function SlopeCalculator() {
         startHeight,
         endHeight,
         isDescending: heightDifference > 0,
+        startNAP: startHeight / 100,
+        endNAP: endHeight / 100,
       };
     } else {
       const startHeight = parseFloat(startHeightCm);
@@ -60,6 +89,8 @@ export default function SlopeCalculator() {
         startHeight,
         endHeight,
         isDescending: heightDifference > 0,
+        startNAP: startHeight / 100,
+        endNAP: endHeight / 100,
       };
     }
   };
@@ -88,12 +119,22 @@ export default function SlopeCalculator() {
               <TrendingDown className="w-5 h-5 text-amber-600" />
             </div>
             <h2 className="text-xl font-semibold text-slate-900">
-              Hellingshoek Calculator
+              Afschot Calculator
             </h2>
           </div>
 
           <div className="space-y-6">
             <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setMode('nap')}
+                className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                  mode === 'nap'
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                NAP Hoogte
+              </button>
               <button
                 onClick={() => setMode('manual')}
                 className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
@@ -102,7 +143,7 @@ export default function SlopeCalculator() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Handmatige invoer
+                Handmatig (cm)
               </button>
               <button
                 onClick={() => setMode('percentage')}
@@ -112,28 +153,89 @@ export default function SlopeCalculator() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Afschot percentage
+                Percentage
               </button>
             </div>
 
-            <div className="p-5 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200">
-              <h3 className="font-semibold text-slate-900 mb-4">
-                Startpunt (0 meter)
-              </h3>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Hoogte (cm)
-                </label>
-                <input
-                  type="number"
-                  value={startHeightCm}
-                  onChange={(e) => setStartHeightCm(e.target.value)}
-                  placeholder="0"
-                  step="0.1"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
-                />
-              </div>
-            </div>
+            {mode === 'nap' ? (
+              <>
+                <div className="p-5 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200">
+                  <h3 className="font-semibold text-slate-900 mb-4">
+                    0-Punt (Startpunt)
+                  </h3>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      NAP Hoogte (meter)
+                    </label>
+                    <input
+                      type="number"
+                      value={startNAP}
+                      onChange={(e) => setStartNAP(e.target.value)}
+                      placeholder="bijv. -1.10"
+                      step="0.01"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    />
+                    <p className="text-xs text-slate-600 mt-2">
+                      Gebruik negatieve waarden onder NAP (bijv. -1.10)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200">
+                  <h3 className="font-semibold text-slate-900 mb-4">Eindpunt</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Afstand (meter)
+                      </label>
+                      <input
+                        type="number"
+                        value={endDistanceM}
+                        onChange={(e) => setEndDistanceM(e.target.value)}
+                        placeholder="0"
+                        step="0.5"
+                        min="0"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        NAP Hoogte (meter)
+                      </label>
+                      <input
+                        type="number"
+                        value={endNAP}
+                        onChange={(e) => setEndNAP(e.target.value)}
+                        placeholder="bijv. -1.25"
+                        step="0.01"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="p-5 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200">
+                  <h3 className="font-semibold text-slate-900 mb-4">
+                    Startpunt (0 meter)
+                  </h3>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Hoogte (cm)
+                    </label>
+                    <input
+                      type="number"
+                      value={startHeightCm}
+                      onChange={(e) => setStartHeightCm(e.target.value)}
+                      placeholder="0"
+                      step="0.1"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             {mode === 'percentage' ? (
               <>
@@ -185,7 +287,7 @@ export default function SlopeCalculator() {
                   </div>
                 </div>
               </>
-            ) : (
+            ) : mode === 'manual' ? (
               <div className="p-5 rounded-lg bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200">
                 <h3 className="font-semibold text-slate-900 mb-4">Eindpunt</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -218,9 +320,20 @@ export default function SlopeCalculator() {
                   </div>
                 </div>
               </div>
-            )}
+            ) : null}
 
-            {results && (
+            {results && mode === 'nap' && (
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  <span className="font-semibold">0-punt NAP:</span> {results.startNAP.toFixed(2)}m
+                  {' → '}
+                  <span className="font-semibold">Eindpunt NAP:</span> {results.endNAP.toFixed(2)}m
+                  {' | '}
+                  <span className="font-semibold">Verschil:</span> {results.heightDifference.toFixed(1)}cm
+                </p>
+              </div>
+            )}
+            {results && mode !== 'nap' && (
               <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <p className="text-sm text-amber-800">
                   <span className="font-semibold">Start:</span> {results.startHeight.toFixed(1)}
@@ -239,18 +352,19 @@ export default function SlopeCalculator() {
 
           <div className="space-y-3 text-sm text-slate-700">
             <p>
-              <span className="font-semibold">Hellingshoek:</span> De gradiënt van
+              <span className="font-semibold">NAP Hoogte:</span> Normaal Amsterdams Peil
+              is het referentiepunt voor hoogtemeting in Nederland. Gebruik negatieve
+              waarden onder NAP (bijv. -1.10m).
+            </p>
+            <p>
+              <span className="font-semibold">Afschot:</span> De gradiënt van
               het startpunt naar het eindpunt bepaalt hoeveel zakking per meter
-              nodig is.
+              nodig is. Het hoogteverschil wordt automatisch berekend uit de NAP-waarden.
             </p>
             <p>
               <span className="font-semibold">Afwatering:</span> Bij bestrating is
               een minimale helling van 1-2% (1-2 cm per meter) aanbevolen voor
               goede afwatering.
-            </p>
-            <p>
-              <span className="font-semibold">Toepassing:</span> Berekening is
-              nuttig voor opritten, looppadden, en bestratingsprojecten.
             </p>
           </div>
 
@@ -317,7 +431,7 @@ export default function SlopeCalculator() {
             </div>
 
             <div className="p-5 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg text-white mb-4">
-              <p className="text-xs text-amber-100 mb-2">Hellingspercentage</p>
+              <p className="text-xs text-amber-100 mb-2">Afschot Percentage</p>
               <p className="text-4xl font-bold">
                 {Math.abs(results.slopePercentage).toFixed(2)}%
               </p>

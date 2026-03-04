@@ -53,6 +53,36 @@ export default function UnifiedPaverCalculator() {
   const [bondPattern, setBondPattern] = useState<BondPattern>('halfsteens');
   const [showResults, setShowResults] = useState(false);
 
+  const handleTileWidthChange = (value: number) => {
+    setTileWidth(value);
+    if (mode === 'advanced') setShowResults(false);
+  };
+
+  const handleTileLengthChange = (value: number) => {
+    setTileLength(value);
+    if (mode === 'advanced') setShowResults(false);
+  };
+
+  const handleJointWidthChange = (value: number) => {
+    setJointWidth(value);
+    if (mode === 'advanced') setShowResults(false);
+  };
+
+  const handleJointDepthChange = (value: number) => {
+    setJointDepth(value);
+    if (mode === 'advanced') setShowResults(false);
+  };
+
+  const handleBondPatternChange = (pattern: BondPattern) => {
+    setBondPattern(pattern);
+    if (mode === 'advanced') setShowResults(false);
+  };
+
+  const handleDimensionLengthChange = (id: string, length: number) => {
+    updateDimensionLength(id, length);
+    if (mode === 'advanced') setShowResults(false);
+  };
+
   const calculateSimple = () => {
     const l = parseFloat(length);
     const w = parseFloat(width);
@@ -718,7 +748,7 @@ export default function UnifiedPaverCalculator() {
                   <input
                     type="number"
                     value={tileWidth === 0 ? '' : tileWidth}
-                    onChange={(e) => setTileWidth(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleTileWidthChange(parseFloat(e.target.value) || 0)}
                     step="0.1"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -730,7 +760,7 @@ export default function UnifiedPaverCalculator() {
                   <input
                     type="number"
                     value={tileLength === 0 ? '' : tileLength}
-                    onChange={(e) => setTileLength(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleTileLengthChange(parseFloat(e.target.value) || 0)}
                     step="0.1"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -742,7 +772,7 @@ export default function UnifiedPaverCalculator() {
                   <input
                     type="number"
                     value={jointWidth === 0 ? '' : jointWidth}
-                    onChange={(e) => setJointWidth(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleJointWidthChange(parseFloat(e.target.value) || 0)}
                     step="0.5"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -754,7 +784,7 @@ export default function UnifiedPaverCalculator() {
                   <input
                     type="number"
                     value={jointDepth === 0 ? '' : jointDepth}
-                    onChange={(e) => setJointDepth(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleJointDepthChange(parseFloat(e.target.value) || 0)}
                     step="5"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -767,7 +797,7 @@ export default function UnifiedPaverCalculator() {
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <button
-                    onClick={() => setBondPattern('halfsteens')}
+                    onClick={() => handleBondPatternChange('halfsteens')}
                     className={`p-3 rounded-lg border-2 transition-all ${
                       bondPattern === 'halfsteens'
                         ? 'border-blue-600 bg-blue-50 text-blue-700 font-semibold'
@@ -778,7 +808,7 @@ export default function UnifiedPaverCalculator() {
                     <div className="text-xs text-slate-600 mt-1">Strek - Kop - Strek</div>
                   </button>
                   <button
-                    onClick={() => setBondPattern('keperwerk')}
+                    onClick={() => handleBondPatternChange('keperwerk')}
                     className={`p-3 rounded-lg border-2 transition-all ${
                       bondPattern === 'keperwerk'
                         ? 'border-blue-600 bg-blue-50 text-blue-700 font-semibold'
@@ -789,7 +819,7 @@ export default function UnifiedPaverCalculator() {
                     <div className="text-xs text-slate-600 mt-1">45° diagonaal</div>
                   </button>
                   <button
-                    onClick={() => setBondPattern('elleboog')}
+                    onClick={() => handleBondPatternChange('elleboog')}
                     className={`p-3 rounded-lg border-2 transition-all ${
                       bondPattern === 'elleboog'
                         ? 'border-blue-600 bg-blue-50 text-blue-700 font-semibold'
@@ -852,7 +882,7 @@ export default function UnifiedPaverCalculator() {
                       <input
                         type="number"
                         value={dimension.length === 0 ? '' : dimension.length}
-                        onChange={(e) => updateDimensionLength(dimension.id, parseFloat(e.target.value) || 0)}
+                        onChange={(e) => handleDimensionLengthChange(dimension.id, parseFloat(e.target.value) || 0)}
                         step="0.01"
                         placeholder="Lengte in meters"
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
