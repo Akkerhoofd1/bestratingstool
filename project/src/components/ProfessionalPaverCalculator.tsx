@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Calculator, Ruler, Scissors, AlertCircle } from 'lucide-react';
 
 type BondPattern = 'halfsteens' | 'blok' | 'elleboog' | 'visgraat' | 'keper' | 'wild';
@@ -226,7 +226,15 @@ export default function ProfessionalPaverCalculator() {
     };
   };
 
-  const results = calculate();
+  const results = useMemo(() => calculate(), [
+    gardenLength,
+    gardenWidth,
+    stoneLength,
+    stoneWidth,
+    jointWidth,
+    bondPattern,
+    wastePercentage
+  ]);
 
   return (
     <div className="space-y-6">
