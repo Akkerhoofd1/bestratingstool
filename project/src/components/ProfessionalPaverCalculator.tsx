@@ -18,11 +18,12 @@ interface StoneSize {
 
 const STANDARD_STONE_SIZES: StoneSize[] = [
   { name: 'Aangepast (handmatig)', length: 0, width: 0 },
+  { name: 'BKK Betonklinker (21 x 10.5 cm)', length: 21, width: 10.5 },
+  { name: 'Waalformaat (20 x 5 cm)', length: 20, width: 5 },
   { name: '5-duimer (21 x 10.5 cm)', length: 21, width: 10.5 },
-  { name: '7-duimer (21 x 14 cm)', length: 21, width: 14 },
+  { name: '7-duimer (21 x 7 cm)', length: 21, width: 7 },
+  { name: 'Dikformaat (21 x 7 cm)', length: 21, width: 7 },
   { name: '10-duimer (20 x 10 cm)', length: 20, width: 10 },
-  { name: 'BKK (21 x 6.8 cm)', length: 21, width: 6.8 },
-  { name: 'Waalformaat (20 x 10 x 5 cm)', length: 20, width: 10 },
   { name: '30 x 30 cm', length: 30, width: 30 },
   { name: '40 x 40 cm', length: 40, width: 40 },
   { name: '50 x 50 cm', length: 50, width: 50 },

@@ -139,12 +139,15 @@ export default function HoursRegistration() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [weeklySummaries, setWeeklySummaries] = useState<WeeklySummary[]>([]);
   const [selectedView, setSelectedView] = useState<'day' | 'week'>('day');
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedWeek, setSelectedWeek] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [customMaterials, setCustomMaterials] = useState<string[]>(getSavedMaterials());
   const [showCustomMaterialInput, setShowCustomMaterialInput] = useState(false);
   const [newCustomMaterial, setNewCustomMaterial] = useState('');
   const [generatedText, setGeneratedText] = useState<string>('');
+  const [generatedDayText, setGeneratedDayText] = useState<string>('');
   const [sawingItems, setSawingItems] = useState<SawingItem[]>([]);
   const [currentSawingMaterial, setCurrentSawingMaterial] = useState(defaultSawingMaterials[0].name);
   const [currentSawingMeters, setCurrentSawingMeters] = useState(0);
@@ -509,6 +512,93 @@ export default function HoursRegistration() {
     navigator.clipboard.writeText(generatedText);
     setMessage({ type: 'success', text: 'Tekst gekopieerd naar klembord!' });
     setTimeout(() => setMessage(null), 3000);
+  };
+
+  const copyDayTextToClipboard = () => {
+    navigator.clipboard.writeText(generatedDayText);
+    setMessage({ type: 'success', text: 'Dagoverzicht gekopieerd naar klembord!' });
+    setTimeout(() => setMessage(null), 3000);
+  };
+
+  const generateDayReport = async (date: string) => {
+    const dayRegistrations = registrations.filter(reg => reg.date === date);
+
+    if (dayRegistrations.length === 0) {
+      setGeneratedDayText('Geen registraties gevonden voor deze dag.');
+      return;
+    }
+
+    const dateObj = new Date(date);
+    const dateStr = dateObj.toLocaleDateString('nl-NL', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    let text = `DAGRAPPORT - ${dateStr}\n`;
+    text += '='.repeat(60) + '\n\n';
+
+    let totalStratenmakerHours = 0;
+    let totalOppermanHours = 0;
+    let totalKoppelHours = 0;
+
+    for (const reg of dayRegistrations) {
+      totalStratenmakerHours += reg.stratenmaker_hours || 0;
+      totalOppermanHours += reg.opperman_hours || 0;
+      totalKoppelHours += reg.koppel_hours || 0;
+    }
+
+    text += 'ARBEIDSUREN\n';
+    text += '-'.repeat(60) + '\n';
+
+    if (totalStratenmakerHours > 0) {
+      text += `Stratenmaker: ${totalStratenmakerHours.toFixed(2)} uur\n`;
+    }
+    if (totalOppermanHours > 0) {
+      text += `Opperman: ${totalOppermanHours.toFixed(2)} uur\n`;
+    }
+    if (totalKoppelHours > 0) {
+      text += `Koppel: ${totalKoppelHours.toFixed(2)} uur\n`;
+    }
+
+    const totalHours = totalStratenmakerHours + totalOppermanHours + totalKoppelHours;
+    text += `\nTotaal uren: ${totalHours.toFixed(2)} uur\n\n`;
+
+    for (const reg of dayRegistrations) {
+
+      const { data: sawingItemsData } = await supabase
+        .from('sawing_items')
+        .select('*')
+        .eq('registration_id', reg.id);
+
+      if (sawingItemsData && sawingItemsData.length > 0) {
+        text += 'ZAAGWERK\n';
+        text += '-'.repeat(60) + '\n';
+
+        let totalSawingMeters = 0;
+        sawingItemsData.forEach((item) => {
+          if (item.input_type === 'pieces' && item.pieces > 0 && item.size_cm > 0) {
+            text += `${item.material}: ${item.pieces} stuks × ${item.size_cm}cm = ${item.meters.toFixed(2)}m\n`;
+          } else {
+            text += `${item.material}: ${item.meters.toFixed(2)}m\n`;
+          }
+          totalSawingMeters += item.meters;
+        });
+
+        text += `\nTotaal gezaagd: ${totalSawingMeters.toFixed(2)}m\n\n`;
+      }
+
+      if (reg.notes && reg.notes.trim() !== '') {
+        text += 'OPMERKINGEN\n';
+        text += '-'.repeat(60) + '\n';
+        text += `${reg.notes}\n\n`;
+      }
+
+      text += '='.repeat(60) + '\n';
+    }
+
+    setGeneratedDayText(text);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1011,7 +1101,32 @@ export default function HoursRegistration() {
 
       {selectedView === 'week' && weeklySummaries.length > 0 && (
         <div className="mt-8 border-t pt-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Weekoverzicht</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Weekoverzicht</h3>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Filter op week:</label>
+              <select
+                value={selectedWeek}
+                onChange={(e) => setSelectedWeek(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Alle weken</option>
+                {weeklySummaries.map((summary) => (
+                  <option key={`${summary.year}-W${summary.week_number}`} value={`${summary.year}-W${summary.week_number}`}>
+                    Week {summary.week_number}, {summary.year}
+                  </option>
+                ))}
+              </select>
+              {selectedWeek && (
+                <button
+                  onClick={() => setSelectedWeek('')}
+                  className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  Toon alles
+                </button>
+              )}
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -1034,7 +1149,9 @@ export default function HoursRegistration() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {weeklySummaries.map((summary) => (
+                {weeklySummaries
+                  .filter(summary => !selectedWeek || `${summary.year}-W${summary.week_number}` === selectedWeek)
+                  .map((summary) => (
                   <tr key={`${summary.year}-W${summary.week_number}`}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       Week {summary.week_number}, {summary.year}
@@ -1050,11 +1167,14 @@ export default function HoursRegistration() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <button
-                        onClick={() => generateWeekText(summary.week_number, summary.year)}
+                        onClick={() => {
+                          setSelectedWeek(`${summary.year}-W${summary.week_number}`);
+                          generateWeekText(summary.week_number, summary.year);
+                        }}
                         className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                       >
                         <FileDown className="w-4 h-4 mr-1" />
-                        Genereer Tekst
+                        Toon Details
                       </button>
                     </td>
                   </tr>
@@ -1063,10 +1183,10 @@ export default function HoursRegistration() {
             </table>
           </div>
 
-          {generatedText && (
+          {generatedText && selectedWeek && (
             <div className="mt-6 bg-gray-50 rounded-lg p-6">
               <div className="flex justify-between items-center mb-4">
-                <h4 className="text-lg font-semibold text-gray-800">Gegenereerde Weektekst</h4>
+                <h4 className="text-lg font-semibold text-gray-800">Weekdetails</h4>
                 <button
                   onClick={copyToClipboard}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -1080,6 +1200,81 @@ export default function HoursRegistration() {
                 rows={20}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm bg-white"
               />
+
+              <div className="mt-6">
+                <h4 className="text-lg font-semibold text-gray-800 mb-4">Registraties in deze week</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Datum
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Stratenmaker
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Opperman
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Koppel
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Totaal
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Acties
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {registrations
+                        .filter(reg => {
+                          if (!selectedWeek) return false;
+                          const [year, week] = selectedWeek.split('-W');
+                          return reg.year === parseInt(year) && reg.week_number === parseInt(week);
+                        })
+                        .map((reg) => (
+                        <tr key={reg.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {new Date(reg.date).toLocaleDateString('nl-NL')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {reg.stratenmaker_hours > 0 ? `${reg.stratenmaker_hours}u` : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {reg.opperman_hours > 0 ? `${reg.opperman_hours}u` : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {reg.koppel_hours > 0 ? `${reg.koppel_hours}u` : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600">
+                            €{reg.total_cost.toFixed(2)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => editRegistration(reg)}
+                                className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                title="Bewerk registratie"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteRegistration(reg.id!)}
+                                className="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                title="Verwijder registratie"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1087,7 +1282,26 @@ export default function HoursRegistration() {
 
       {selectedView === 'day' && registrations.length > 0 && (
         <div className="mt-8 border-t pt-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Dagelijkse Registraties</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Dagelijkse Registraties</h3>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Filter op datum:</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {selectedDate && (
+                <button
+                  onClick={() => setSelectedDate('')}
+                  className="px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  Toon alles
+                </button>
+              )}
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -1122,7 +1336,10 @@ export default function HoursRegistration() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {registrations.slice(0, 10).map((reg) => (
+                {registrations
+                  .filter(reg => !selectedDate || reg.date === selectedDate)
+                  .slice(0, 50)
+                  .map((reg) => (
                   <tr key={reg.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {new Date(reg.date).toLocaleDateString('nl-NL')}
@@ -1156,6 +1373,16 @@ export default function HoursRegistration() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex gap-2">
                         <button
+                          onClick={() => {
+                            setSelectedDate(reg.date);
+                            generateDayReport(reg.date);
+                          }}
+                          className="inline-flex items-center px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          title="Toon dagrapport"
+                        >
+                          <FileDown className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => editRegistration(reg)}
                           className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                           title="Bewerk registratie"
@@ -1176,6 +1403,33 @@ export default function HoursRegistration() {
               </tbody>
             </table>
           </div>
+
+          {generatedDayText && selectedDate && (
+            <div className="mt-6 bg-gray-50 rounded-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-semibold text-gray-800">
+                  Dagrapport - {new Date(selectedDate).toLocaleDateString('nl-NL', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </h4>
+                <button
+                  onClick={copyDayTextToClipboard}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Kopieer naar Klembord
+                </button>
+              </div>
+              <textarea
+                value={generatedDayText}
+                readOnly
+                rows={20}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm bg-white"
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

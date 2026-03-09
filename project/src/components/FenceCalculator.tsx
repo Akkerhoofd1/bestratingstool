@@ -11,6 +11,15 @@ interface Gate {
   width: string;
 }
 
+interface SectionResult {
+  sectionId: number;
+  length: number;
+  panels: number;
+  posts: number;
+  layout: string;
+  remainingCm: number;
+}
+
 interface FenceResults {
   totalLength: number;
   panels: number;
@@ -18,6 +27,7 @@ interface FenceResults {
   concrete: number;
   concreteBags: number;
   cornerPosts: number;
+  sectionResults: SectionResult[];
 }
 
 const FenceCalculator = () => {
@@ -28,6 +38,7 @@ const FenceCalculator = () => {
   const [postThickness, setPostThickness] = useState<string>('10');
   const [corners, setCorners] = useState<string>('0');
   const [gates, setGates] = useState<Gate[]>([]);
+  const [includeCapCovers, setIncludeCapCovers] = useState<boolean>(false);
   const [results, setResults] = useState<FenceResults | null>(null);
 
   const addSection = () => {
@@ -58,6 +69,29 @@ const FenceCalculator = () => {
     setGates(gates.map(g => g.id === id ? { ...g, width } : g));
   };
 
+  const calculateSectionLayout = (lengthM: number, panelWidthCm: number, postThicknessCm: number) => {
+    const totalLengthCm = lengthM * 100;
+
+    let layout = '';
+    let currentLengthCm = 0;
+    let panelCount = 0;
+    let postCount = 1;
+
+    layout = 'Paal';
+    currentLengthCm += postThicknessCm;
+
+    while (currentLengthCm + panelWidthCm + postThicknessCm <= totalLengthCm) {
+      layout += ' + Paneel + Paal';
+      currentLengthCm += panelWidthCm + postThicknessCm;
+      panelCount++;
+      postCount++;
+    }
+
+    const remainingCm = totalLengthCm - currentLengthCm;
+
+    return { layout, panelCount, postCount, remainingCm };
+  };
+
   const calculateFence = () => {
     const totalLength = sections.reduce((sum, section) => {
       return sum + (parseFloat(section.length) || 0);
@@ -67,24 +101,38 @@ const FenceCalculator = () => {
       return sum + (parseFloat(gate.width) || 0) / 100;
     }, 0);
 
-    const effectiveLength = totalLength - gateLength;
-
     const panelWidthCm = parseFloat(panelWidth) || 180;
     const heightCm = parseFloat(height) || 180;
     const numCorners = parseInt(corners) || 0;
+    const postThicknessCm = parseFloat(postThickness) || 10;
 
-    const panelWidthM = panelWidthCm / 100;
+    const sectionResults: SectionResult[] = sections.map(section => {
+      const sectionLength = parseFloat(section.length) || 0;
+      const { layout, panelCount, postCount, remainingCm } = calculateSectionLayout(
+        sectionLength,
+        panelWidthCm,
+        postThicknessCm
+      );
 
-    const numberOfPanels = Math.ceil(effectiveLength / panelWidthM);
+      return {
+        sectionId: section.id,
+        length: sectionLength,
+        panels: panelCount,
+        posts: postCount,
+        layout,
+        remainingCm
+      };
+    });
 
-    const numberOfPosts = numberOfPanels + 1 + numCorners;
+    const totalPanels = sectionResults.reduce((sum, sr) => sum + sr.panels, 0);
+    const totalPosts = sectionResults.reduce((sum, sr) => sum + sr.posts, 0);
+
+    const numberOfPosts = totalPosts + numCorners;
 
     let concretePerPost: number;
-    const thickness = parseFloat(postThickness) || 10;
-    const thicknessCm = thickness;
 
     if (postType === 'wood') {
-      concretePerPost = 0.025 + (thicknessCm - 10) * 0.001;
+      concretePerPost = 0.025 + (postThicknessCm - 10) * 0.001;
     } else {
       if (heightCm <= 150) {
         concretePerPost = 0.03;
@@ -93,7 +141,7 @@ const FenceCalculator = () => {
       } else {
         concretePerPost = 0.04;
       }
-      concretePerPost += (thicknessCm - 10) * 0.002;
+      concretePerPost += (postThicknessCm - 10) * 0.002;
     }
 
     const totalConcrete = numberOfPosts * concretePerPost;
@@ -102,11 +150,12 @@ const FenceCalculator = () => {
 
     setResults({
       totalLength,
-      panels: numberOfPanels,
+      panels: totalPanels,
       posts: numberOfPosts,
       concrete: totalConcrete,
       concreteBags: concreteBags,
-      cornerPosts: numCorners
+      cornerPosts: numCorners,
+      sectionResults
     });
   };
 
@@ -258,6 +307,22 @@ const FenceCalculator = () => {
               </select>
             </div>
 
+            {postType === 'concrete' && (
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includeCapCovers}
+                    onChange={(e) => setIncludeCapCovers(e.target.checked)}
+                    className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                  />
+                  <span className="text-sm font-medium text-slate-700">
+                    Afdekkappen toevoegen (per paneel)
+                  </span>
+                </label>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Dikte paal (cm)
@@ -341,16 +406,93 @@ const FenceCalculator = () => {
                 </p>
               </div>
 
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <h4 className="font-semibold text-slate-900 mb-3 text-sm">Indeling per lengte</h4>
+                <div className="space-y-3">
+                  {results.sectionResults.map((section, index) => (
+                    <div key={section.sectionId} className="bg-white p-3 rounded-lg border border-purple-300">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-semibold text-slate-800">
+                          Lengte {index + 1}: {section.length.toFixed(2)}m
+                        </span>
+                        <span className="text-xs text-slate-600">
+                          {section.panels} panelen • {section.posts} palen
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 mb-2 break-words leading-relaxed">
+                        {section.layout}
+                      </p>
+                      <div className="bg-purple-50 p-2 rounded border border-purple-200">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-medium text-slate-700">Restant om te zagen:</span>
+                          <span className="text-lg font-bold text-purple-700">
+                            {section.remainingCm.toFixed(1)} cm
+                          </span>
+                        </div>
+                        {section.remainingCm >= parseFloat(panelWidth) && (
+                          <p className="text-xs text-purple-600 mt-1">
+                            Je kunt nog een volledig paneel plaatsen!
+                          </p>
+                        )}
+                        {section.remainingCm < parseFloat(panelWidth) && section.remainingCm > parseFloat(postThickness) && (
+                          <p className="text-xs text-purple-600 mt-1">
+                            Zaaglengte paneel: {(section.remainingCm - parseFloat(postThickness)).toFixed(1)}cm
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="font-semibold text-slate-900 mb-2 text-sm">Materialen samenvatting</h4>
-                <ul className="space-y-1 text-sm text-slate-700">
-                  <li>• {results.panels}× schuttingpaneel {panelWidth}×{height}cm</li>
-                  <li>• {results.posts}× {postType === 'wood' ? 'houten' : 'betonnen'} paal ({postThickness}cm)</li>
-                  {results.cornerPosts > 0 && <li>• {results.cornerPosts}× hoekpalen voor {corners} hoeken</li>}
-                  {gates.length > 0 && <li>• {gates.length}× poort(en) met kozijn</li>}
-                  <li>• {results.concreteBags} zakken droge beton (25kg)</li>
-                  <li>• Schroeven/bevestigingsmaterialen</li>
-                </ul>
+                <h4 className="font-semibold text-slate-900 mb-3 text-sm">Totaal materiaal</h4>
+                <div className="space-y-3">
+                  <div className="bg-white p-3 rounded-lg">
+                    <h5 className="font-semibold text-xs text-slate-600 mb-2">Panelen</h5>
+                    <ul className="space-y-1 text-sm text-slate-700">
+                      <li>• {results.panels}× schuttingpaneel {panelWidth}×{height}cm</li>
+                      {postType === 'concrete' && includeCapCovers && (
+                        <li>• {results.panels}× afdekkappen voor panelen</li>
+                      )}
+                    </ul>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg">
+                    <h5 className="font-semibold text-xs text-slate-600 mb-2">Palen</h5>
+                    <ul className="space-y-1 text-sm text-slate-700">
+                      <li>• {results.posts}× {postType === 'wood' ? 'houten' : 'betonnen'} paal ({postThickness}cm)</li>
+                      {results.cornerPosts > 0 && <li>• {results.cornerPosts}× hoekpalen voor {corners} hoeken</li>}
+                      <li>• {results.posts}× bevestigingsset per paal</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg">
+                    <h5 className="font-semibold text-xs text-slate-600 mb-2">Fundering</h5>
+                    <ul className="space-y-1 text-sm text-slate-700">
+                      <li>• {results.concreteBags} zakken droge beton (25kg)</li>
+                      <li>• {results.concrete.toFixed(2)} m³ totaal beton</li>
+                    </ul>
+                  </div>
+
+                  {gates.length > 0 && (
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="font-semibold text-xs text-slate-600 mb-2">Poorten</h5>
+                      <ul className="space-y-1 text-sm text-slate-700">
+                        <li>• {gates.length}× poort(en) met kozijn</li>
+                        <li>• {gates.length}× hang- en sluitwerk set</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="bg-white p-3 rounded-lg">
+                    <h5 className="font-semibold text-xs text-slate-600 mb-2">Extra</h5>
+                    <ul className="space-y-1 text-sm text-slate-700">
+                      <li>• Schroeven/bevestigingsmaterialen</li>
+                      <li>• Waterpas en meetgereedschap</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
 
               <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">

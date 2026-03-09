@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import UnifiedPaverCalculator from './components/UnifiedPaverCalculator';
-import ProfessionalPaverCalculator from './components/ProfessionalPaverCalculator';
+import ProfessionalBondCalculator from './components/ProfessionalBondCalculator';
 import VolumeCalculator from './components/VolumeCalculator';
 import AdvancedSketchTool from './components/AdvancedSketchTool';
 import SlopeCalculator from './components/SlopeCalculator';
@@ -11,17 +10,16 @@ import FenceCalculator from './components/FenceCalculator';
 import GravelCalculator from './components/GravelCalculator';
 import HoursRegistration from './components/HoursRegistration';
 import Header from './components/Header';
-import { Square, Box, TrendingDown, FileText, Package, Wrench, Fence, Zap, Clock, Menu, X, Ruler, Calculator } from 'lucide-react';
+import { Box, TrendingDown, FileText, Package, Wrench, Fence, Zap, Clock, Menu, X, Ruler, Grid3x3 } from 'lucide-react';
 
-type Tab = 'pavers' | 'professional' | 'volume' | 'sketch' | 'slope' | 'quotation' | 'breaker' | 'pvc' | 'fence' | 'gravel' | 'hours';
+type Tab = 'professional' | 'volume' | 'sketch' | 'slope' | 'quotation' | 'breaker' | 'pvc' | 'fence' | 'gravel' | 'hours';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('pavers');
+  const [activeTab, setActiveTab] = useState<Tab>('professional');
   const [menuOpen, setMenuOpen] = useState(false);
 
   const tabs = [
-    { id: 'pavers' as Tab, label: 'Klinkerberekening', icon: Square },
-    { id: 'professional' as Tab, label: 'Professionele Calculator', icon: Calculator },
+    { id: 'professional' as Tab, label: 'Professionele Calculator', icon: Grid3x3 },
     { id: 'volume' as Tab, label: 'Kuubberekening', icon: Box },
     { id: 'gravel' as Tab, label: 'Grindberekening', icon: Zap },
     { id: 'sketch' as Tab, label: 'Uitzettool Pro', icon: Ruler },
@@ -107,8 +105,7 @@ function App() {
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
           <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-6xl lg:mt-0 mt-20">
-            {activeTab === 'pavers' && <UnifiedPaverCalculator />}
-            {activeTab === 'professional' && <ProfessionalPaverCalculator />}
+            {activeTab === 'professional' && <ProfessionalBondCalculator />}
             {activeTab === 'volume' && <VolumeCalculator />}
             {activeTab === 'gravel' && <GravelCalculator />}
             {activeTab === 'sketch' && <AdvancedSketchTool />}
